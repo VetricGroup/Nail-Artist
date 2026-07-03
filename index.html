@@ -3,7 +3,7 @@
   Nail Artist · Vale Bolaños — Heredia, Costa Rica · Sitio bilingüe ES/EN
   Adaptado a partir de una plantilla previa (Higuerón Lodge), conservando
   la MISMA paleta de colores del original (oscura, blanco/negro), tipografía,
-  estructura, secciones, animaciones (GSAP) e iconografía.
+  estructura, secciones, animaciones (100% Vanilla JS + CSS) e iconografía.
   Las fotos son MARCADORES por ahora (buscá "FOTO:" en cada uno).
 
   PENDIENTES PRODUCCIÓN:
@@ -60,6 +60,24 @@
         html.js-motion .mo-btn{ opacity:0; transform:translateX(-60px); transition-duration:.9s; }
         .mo-text.is-in, .mo-btn.is-in{ opacity:1!important; transform:translateX(0)!important; }
 
+        /* ---- Imágenes: suben desde abajo + fade-in al entrar en el viewport ----
+           Keyframe explícito: arranca en translateY(50px)/opacity:0 (más abajo,
+           invisible) y termina en translateY(0)/opacity:1 (posición original),
+           simulando que la imagen "sube" al hacer scroll hasta ella. Se dispara
+           UNA sola vez por sección, vía IntersectionObserver (ver motion.js más abajo).
+           Igual que el texto: por defecto SIEMPRE visible (transición segura ante
+           fallos de red/JS); solo se oculta si el JS confirmó que puede animar
+           (clase "js-motion" en <html>, agregada de forma síncrona). */
+        @keyframes mo-img-rise{
+            from{ opacity:0; transform: translateY(50px); }
+            to  { opacity:1; transform: translateY(0); }
+        }
+        .mo-img{ will-change: transform, opacity; }
+        html.js-motion .mo-img{ opacity:0; transform: translateY(50px); }
+        .mo-img.is-in{
+            animation: mo-img-rise .9s var(--ease-premium) forwards;
+        }
+
         /* Magnetic hover sutil — sin elastic/bounce, misma curva del sistema */
         .magnetic{ display:inline-flex; transition: transform .45s var(--ease-premium); }
 
@@ -79,35 +97,35 @@
         .ph small{ position:relative; z-index:1; color:rgba(255,255,255,.55); font-size:.65rem; letter-spacing:.04em; text-align:center; padding:0 .5rem; }
 
         /* ---- Acordeón de fotos ("Mi trabajo") ---- */
-        .photo-acc-wrap{ display:flex; gap:.5rem; height:440px; }
+        .photo-acc-wrap{ display:flex; gap:1rem; height:450px; }
         .photo-acc{
-            position:relative; flex:1 1 0; min-width:0; border-radius:1.5rem; overflow:hidden;
-            cursor:pointer; transition:flex-grow .55s cubic-bezier(.4,0,.2,1);
+            position:relative; flex:1 1 0; min-width:60px; border-radius:1rem; overflow:hidden;
+            cursor:pointer; transition:flex-grow .7s ease-in-out;
             border:1px solid rgba(255,255,255,.08);
         }
         .photo-acc .ph{ position:absolute; inset:0; }
-        .photo-acc .acc-scrim{ position:absolute; inset:0; background:linear-gradient(0deg, rgba(0,0,0,.7), transparent 55%); }
+        .photo-acc .acc-scrim{ position:absolute; inset:0; background:rgba(0,0,0,.4); }
         .photo-acc .acc-lbl{
-            position:absolute; left:.9rem; bottom:.9rem; color:#fff; font-weight:500; font-size:.8rem;
-            letter-spacing:.04em; white-space:nowrap;
-            writing-mode: vertical-rl; text-orientation:mixed; transform:rotate(180deg);
-            transition: all .3s ease;
+            position:absolute; left:50%; bottom:6rem; color:#fff; font-weight:600; font-size:1.125rem;
+            letter-spacing:.01em; white-space:nowrap;
+            transform:translateX(-50%) rotate(90deg);
+            transition: all .3s ease-in-out;
         }
-        @media (hover:hover){ .photo-acc:hover{ flex-grow:5; } }
-        .photo-acc.is-active{ flex-grow:5; }
+        @media (hover:hover){ .photo-acc:hover{ flex-grow:6; } }
+        .photo-acc.is-active{ flex-grow:6; }
         .photo-acc.is-active .acc-lbl, .photo-acc:hover .acc-lbl{
-            writing-mode: horizontal-tb; transform:none; font-size:.95rem;
+            bottom:1.5rem; transform:translateX(-50%) rotate(0deg);
         }
         @media (max-width:640px){
             .photo-acc-wrap{ flex-direction:column; height:auto; }
-            .photo-acc{ height:64px; flex:none; }
-            .photo-acc.is-active{ height:220px; }
-            .photo-acc .acc-lbl{ writing-mode:horizontal-tb; transform:none; font-size:.85rem; }
+            .photo-acc{ height:64px; flex:none; min-width:0; }
+            .photo-acc.is-active{ height:260px; }
+            .photo-acc .acc-lbl{ transform:translateX(-50%) rotate(0deg); font-size:1rem; bottom:1rem; }
         }
 
         @media (prefers-reduced-motion: reduce){
             html{scroll-behavior:auto;}
-            .mo-text,.mo-btn{opacity:1!important;transform:none!important;transition:none;}
+            .mo-text,.mo-btn,.mo-img{opacity:1!important;transform:none!important;transition:none;}
             .photo-acc{transition:none;}
             .magnetic{transition:none!important;}
             *{animation-duration:.01ms!important;}
@@ -158,7 +176,7 @@
         <!-- Hero -->
         <section class="relative h-[100svh] w-full bg-black overflow-hidden">
             <!-- FOTO: images/hero.png -->
-            <div class="absolute inset-0 w-full h-full opacity-90 scale-110" data-hero-img>
+            <div class="absolute inset-0 w-full h-full opacity-90 scale-110" data-hero-img data-parallax="8">
                 <img src="images/hero.png" alt="Nail art de Vale Bolaños" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>
             </div>
@@ -181,7 +199,7 @@
         <section class="relative px-6 py-20 max-w-2xl mx-auto text-center">
             <div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mb-5 mo-text" data-i18n="intro.eyebrow">Sobre mí</div>
             <p class="sec-lede text-base mb-10 mo-text" data-i18n="intro.lede">Mi historia y mi pasión por el arte de las uñas.</p>
-            <div class="w-[200px] h-[240px] mx-auto rounded-2xl overflow-hidden mb-10">
+            <div class="mo-img w-[200px] h-[240px] mx-auto rounded-2xl overflow-hidden mb-10">
                 <!-- FOTO: images/vale.png -->
                 <img src="images/vale.png" alt="Vale Bolaños, nail artist" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                 <div class="ph" style="display:none;"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>
@@ -198,7 +216,7 @@
             <p class="sec-lede text-lg leading-relaxed max-w-xl mo-text" data-i18n="about.body2">Combinamos técnicas modernas con una atención minuciosa. Trabajamos en un ambiente relajado en Heredia, con los mejores productos del mercado, para que tus uñas no solo se vean increíbles, sino que se mantengan sanas y fuertes.</p>
             <div class="relative h-[460px] w-full mt-12">
                 <!-- FOTO: images/foto1.png -->
-                <div class="absolute right-0 top-0 w-[78%] h-[380px] rounded-3xl overflow-hidden z-0">
+                <div class="mo-img absolute right-0 top-0 w-[78%] h-[380px] rounded-3xl overflow-hidden z-0">
                     <div class="w-full h-full scale-105" data-parallax="-12">
                         <img src="images/foto1.png" alt="Vale Bolaños trabajando en el estudio" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>
@@ -206,7 +224,7 @@
                 </div>
                 <div class="absolute right-4 top-4 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full text-xs z-10 flex items-center gap-1.5"><svg class="icn" style="width:14px;height:14px"><use href="#i-pin"/></svg> Heredia · CR</div>
                 <!-- FOTO: images/Nail Art.png -->
-                <div class="absolute left-0 bottom-0 w-[70%] h-[290px] rounded-3xl overflow-hidden z-10 shadow-2xl">
+                <div class="mo-img absolute left-0 bottom-0 w-[70%] h-[290px] rounded-3xl overflow-hidden z-10 shadow-2xl">
                     <div class="w-full h-full scale-105" data-parallax="13">
                         <img src="images/Nail Art.png" alt="Detalle de un set de uñas recién terminado" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>
@@ -252,7 +270,7 @@
             <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mo-text" data-i18n="around.eyebrow">Ubicación</div></div>
             <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6 mo-text" data-i18n="around.title">Heredia, Costa Rica</h2>
             <p class="text-center sec-lede text-base leading-relaxed mb-14 max-w-xl mx-auto mo-text" data-i18n="around.sub">Atiendo en Heredia, con fácil acceso y coordinación de horario por WhatsApp o Instagram. Escribime y coordinamos el mejor día para tu cita.</p>
-            <div class="relative w-full h-[440px] rounded-3xl overflow-hidden">
+            <div class="mo-img relative w-full h-[440px] rounded-3xl overflow-hidden">
                 <!-- FOTO: espacio / rincón del estudio de Vale -->
                 <div class="absolute inset-0 w-full h-full scale-105" data-parallax="13"><div class="ph"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div></div>
                 <div class="absolute inset-0 bg-black/35"></div>
@@ -496,7 +514,7 @@
 
         function renderDynamic() {
             document.getElementById("photo-accordion").innerHTML = PORTFOLIO.map((p) => `
-                <div class="photo-acc gal-item" data-full="${p.img}" tabindex="0" role="button" aria-label="${t(p.k)}">
+                <div class="photo-acc gal-item mo-img" data-full="${p.img}" tabindex="0" role="button" aria-label="${t(p.k)}">
                     <img src="${p.img}" alt="${t(p.k)} — ${t('alt.cabin')}" class="w-full h-full object-cover" style="position:absolute;inset:0;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                     <div class="ph" style="display:none;"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>
                     <div class="acc-scrim"></div><span class="acc-lbl">${t(p.k)}</span>
@@ -612,7 +630,7 @@
             if (ok) form.reset();
         });
 
-        // Scroll reveals + parallax are handled by the GSAP module (animations.js) loaded below.
+        // Scroll reveals + parallax are handled by the vanilla motion module below.
 
         document.getElementById("yr").textContent = new Date().getFullYear();
         apply("es");
@@ -621,31 +639,42 @@
     <script type="application/ld+json">
     {"@context":"https://schema.org","@type":"NailSalon","name":"Nail Artist · Vale Bolaños","description":"Manicure, pedicure y nail art personalizado en Heredia, Costa Rica.","address":{"@type":"PostalAddress","addressLocality":"Heredia","addressCountry":"CR"},"sameAs":["https://www.instagram.com/valnails.cr","https://www.facebook.com/share/1D2kMnFu5p/?mibextid=wwXIfr"],"url":"https://valenails.example.com/"}
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-    <!-- animations.js — reveal robusto (IntersectionObserver nativo) + parallax sutil (GSAP, decorativo) -->
+    <!-- motion.js — 100% Vanilla JS: reveal robusto (IntersectionObserver nativo)
+         + parallax sutil (scroll + requestAnimationFrame), sin librerías externas. -->
     <script>
 /* =====================================================================
-   Nail Artist · Vale Bolaños — motion.js
+   Nail Artist · Vale Bolaños — motion.js (100% Vanilla JS + CSS)
 
-   IMPORTANTE: el reveal de texto (lo que hace visible el contenido) NO
-   depende de que GSAP cargue. Usa IntersectionObserver, una API nativa
-   del navegador, así que el contenido SIEMPRE se muestra aunque una
-   librería externa falle en cargar (red lenta, bloqueador, etc.).
-   GSAP se usa únicamente para el parallax, que es decorativo: si no
-   carga, las imágenes igual se ven, solo sin el movimiento sutil.
+   Sin librerías externas: todo el motion corre con APIs nativas del
+   navegador (IntersectionObserver, requestAnimationFrame, CSS
+   transitions/transforms). Nada depende de que un script de terceros
+   cargue, así que el contenido y las animaciones SIEMPRE funcionan.
 
    Reglas del sistema de motion:
-   1) Todo el texto (títulos, párrafos, botones) entra deslizando de
-      izquierda a derecha (translateX, nunca Y), opacidad 0→1, con la
-      curva cubic-bezier(0.22,1,0.36,1), sin rebote. Lo anima CSS
-      (transition), disparado una sola vez al entrar en el viewport,
-      con un pequeño retraso escalonado entre elementos de un grupo.
-   2) Las imágenes no tienen animación de entrada: ya están en la
-      página. Su único movimiento es un parallax de unos pocos px,
-      atado al scroll.
-   3) Nada de animaciones independientes del scroll (sin floating loops).
-   4) Magnetic hover muy sutil en botones, misma curva, sin elastic.
+   1) Al cargar la página, todo el texto del hero (y el resto del
+      texto de cada sección) entra deslizando de izquierda a derecha
+      (translateX, nunca Y), opacidad 0→1, con la curva
+      cubic-bezier(0.22,1,0.36,1), sin rebote. Lo anima CSS
+      (transition), disparado una sola vez cuando el elemento entra en
+      el viewport (el hero ya está en pantalla al cargar, así que se
+      dispara de inmediato), con un pequeño retraso escalonado entre
+      elementos de un grupo.
+   2) Las imágenes clave (fotos de "Sobre Vale", acordeón "Mi trabajo",
+      tarjeta de Heredia) tienen una entrada 3D: se elevan desde abajo
+      con perspectiva (translateY + rotateX) y terminan planas. También
+      disparada una sola vez al entrar en el viewport, vía CSS transition.
+   3) El acordeón de fotos ("Mi trabajo") se abre al pasar el mouse
+      (CSS :hover) y, en táctil, con un toque — ver bindGallery() más
+      arriba y las reglas .photo-acc en el <style>.
+   4) Ciertos fondos/fotos (hero, banner de autocuidado, tarjetas con
+      data-parallax) tienen un parallax continuo: se desplazan unos
+      pocos px en dirección OPUESTA al scroll mientras su sección está
+      en el viewport. Se calcula con scroll + requestAnimationFrame,
+      y un IntersectionObserver apaga el cálculo fuera de pantalla.
+   5) Nada de animaciones independientes del scroll (sin floating loops).
+   6) Magnetic hover muy sutil en botones, misma curva, sin elastic.
+   7) Todo respeta prefers-reduced-motion y es responsivo (el parallax
+      se atenúa a la mitad en pantallas angostas).
    ===================================================================== */
 
 (function () {
@@ -662,31 +691,37 @@
     document.querySelectorAll(sel).forEach(function (el) { el.classList.add("mo-text"); });
   });
 
-  var revealEls = Array.prototype.slice.call(document.querySelectorAll(".mo-text, .mo-btn"));
+  // ---------------------------------------------------------------------
+  // Reveal por SECCIÓN: un único IntersectionObserver observa cada
+  // <section> (y el footer) como unidad. Cuando una sección entra en el
+  // viewport, se revelan TODOS sus elementos .mo-text/.mo-btn/.mo-img con
+  // un pequeño retraso escalonado entre ellos. Esto da control por
+  // sección (threshold, rootMargin, orden) en un solo lugar, en vez de
+  // observar cada elemento suelto.
+  // ---------------------------------------------------------------------
+  var sections = Array.prototype.slice.call(document.querySelectorAll("main > section, footer"));
+  var anyRevealTarget = document.querySelector(".mo-text, .mo-btn, .mo-img");
 
-  if (prefersReduced || !revealEls.length) {
+  if (prefersReduced || !anyRevealTarget || !sections.length) {
     // Nada que animar, o el usuario prefiere sin movimiento: no se oculta nada.
   } else {
     // Recién ahora "armamos" el ocultamiento (ver CSS: html.js-motion .mo-text{opacity:0...}).
-    // Si algo de lo de abajo falla, esta clase nunca se agrega y el texto sigue visible siempre.
+    // Si algo de lo de abajo falla, esta clase nunca se agrega y el contenido sigue visible siempre.
     document.documentElement.classList.add("js-motion");
     // Forzamos que el navegador "pinte" ese estado oculto antes de seguir — si no, para el
     // contenido que ya está a la vista al cargar (como el hero), ocultar y mostrar pasa tan
     // rápido en el mismo frame que el ojo nunca ve la animación (parece que no pasa nada).
     void document.documentElement.offsetHeight;
 
-    // Retraso escalonado (80–120ms) por grupo: contamos posición dentro de su padre inmediato.
-    var counters = new WeakMap();
-    function delayFor(el) {
-      var parent = el.parentElement;
-      var n = counters.get(parent) || 0;
-      counters.set(parent, n + 1);
-      return Math.min(n, 8) * 100; // tope de 8 pasos para no demorar de más en grupos largos
-    }
-    function revealNow(el) {
-      if (el.classList.contains("is-in")) return;
-      el.style.transitionDelay = delayFor(el) + "ms";
-      el.classList.add("is-in");
+    function revealSection(section) {
+      var items = Array.prototype.slice.call(section.querySelectorAll(".mo-text, .mo-btn, .mo-img"));
+      items.forEach(function (el, i) {
+        if (el.classList.contains("is-in")) return;
+        var delay = Math.min(i, 8) * 100 + "ms"; // tope de 8 pasos para no demorar de más
+        el.style.transitionDelay = delay; // usado por .mo-text / .mo-btn (transition)
+        el.style.animationDelay = delay;  // usado por .mo-img (keyframes)
+        el.classList.add("is-in");
+      });
     }
 
     // Doble requestAnimationFrame: garantiza que el frame "oculto" ya se pintó en pantalla
@@ -696,19 +731,19 @@
         var io = new IntersectionObserver(function (entries, obs) {
           entries.forEach(function (entry) {
             if (!entry.isIntersecting) return;
-            revealNow(entry.target);
+            revealSection(entry.target);
             obs.unobserve(entry.target);
           });
-        }, { threshold: 0.08, rootMargin: "0px 0px -8% 0px" });
-        revealEls.forEach(function (el) { io.observe(el); });
+        }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+        sections.forEach(function (sec) { io.observe(sec); });
       } else {
-        revealEls.forEach(revealNow);
+        sections.forEach(revealSection);
       }
     }); });
 
     // Red de seguridad, corta y no atada a la carga de imágenes/recursos externos:
     // nada debe quedar invisible por más de ~1.2s, pase lo que pase.
-    setTimeout(function () { revealEls.forEach(revealNow); }, 1200);
+    setTimeout(function () { sections.forEach(revealSection); }, 1200);
   }
 
   /* ---------- Magnetic hover sutil (sin elastic; misma curva vía CSS transition) ---------- */
@@ -728,42 +763,70 @@
     });
   }
 
-  /* ---------- Parallax ultra sutil (decorativo, opcional — requiere GSAP) ---------- */
-  if (prefersReduced || !window.gsap || !window.ScrollTrigger) return;
+  /* ---------- Parallax ultra sutil, 100% Vanilla JS (scroll + rAF) ----------
+     Cada elemento [data-parallax="N"] se desplaza hasta ±N px en dirección
+     OPUESTA al scroll mientras cruza el viewport: cuando el usuario baja,
+     la imagen sube un poco respecto al resto de la sección (y viceversa).
+     Un IntersectionObserver mantiene un set de "elementos activos": solo se
+     recalcula su posición mientras su sección está en pantalla, así no se
+     gasta trabajo de scroll en elementos lejos de la vista. */
+  if (prefersReduced) return;
 
-  gsap.registerPlugin(ScrollTrigger);
-  ScrollTrigger.config({ ignoreMobileResize: true });
+  var parallaxEls = Array.prototype.slice.call(document.querySelectorAll("[data-parallax]"));
+  if (!parallaxEls.length) return;
 
-  var hero = document.querySelector("[data-hero-img]");
-  if (hero) {
-    gsap.fromTo(hero, { y: -8 }, {
-      y: 8,
-      ease: "none",
-      scrollTrigger: { trigger: hero.closest("section"), start: "top top", end: "bottom top", scrub: true }
+  // Cachear el scale original (si lo hay, ej. Tailwind scale-105/scale-110) de cada
+  // elemento ANTES de tocar su transform, para no perderlo al animar por JS.
+  parallaxEls.forEach(function (el) {
+    var m = getComputedStyle(el).transform;
+    var scale = 1;
+    if (m && m !== "none") {
+      var nums = m.replace(/^matrix\(|\)$/g, "").split(",").map(parseFloat);
+      if (nums.length >= 4) scale = nums[0];
+    }
+    el._parallaxScale = scale;
+  });
+
+  var activeEls = new Set();
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) activeEls.add(entry.target);
+      else activeEls.delete(entry.target);
+    });
+  }, { rootMargin: "20% 0px 20% 0px" });
+  parallaxEls.forEach(function (el) { io.observe(el); });
+
+  function currentFactor() {
+    return window.innerWidth < 640 ? 0.5 : 1; /* mitad de intensidad en mobile */
+  }
+
+  var ticking = false;
+  function applyParallax() {
+    ticking = false;
+    var vh = window.innerHeight;
+    var factor = currentFactor();
+    activeEls.forEach(function (el) {
+      var rect = el.getBoundingClientRect();
+      // progress: -1 cuando el elemento todavía está por debajo del centro de
+      // pantalla (recién entrando), +1 cuando ya lo pasó por arriba (saliendo).
+      // 0 cuando su centro coincide con el centro del viewport.
+      var progress = (vh / 2 - (rect.top + rect.height / 2)) / (vh / 2 + rect.height / 2);
+      progress = Math.max(-1, Math.min(1, progress));
+      var raw = Math.max(-16, Math.min(16, parseFloat(el.dataset.parallax) || 0)) * factor;
+      // Al hacer scroll hacia abajo, "progress" crece (-1 → +1), así que con el
+      // signo negativo la imagen se traslada hacia ARRIBA (translateY cada vez
+      // más negativo), creando el efecto de profundidad pedido.
+      var y = -progress * raw;
+      el.style.transform = "translate3d(0," + y.toFixed(2) + "px,0) scale(" + el._parallaxScale + ")";
     });
   }
-
-  var mm = gsap.matchMedia();
-  function buildParallax(factor) {
-    return function () {
-      gsap.utils.toArray("[data-parallax]").forEach(function (el) {
-        if (el === hero) return;
-        var raw = parseFloat(el.dataset.parallax) || 0;
-        var amt = Math.max(-16, Math.min(16, raw)) * factor; /* casi imperceptible, en px */
-        gsap.fromTo(el, { y: -amt }, {
-          y: amt,
-          ease: "none",
-          scrollTrigger: { trigger: el.closest("section"), start: "top bottom", end: "bottom top", scrub: true }
-        });
-      });
-    };
+  function onScrollOrResize() {
+    if (!ticking) { ticking = true; requestAnimationFrame(applyParallax); }
   }
-  mm.add("(min-width: 640px)", buildParallax(1));
-  mm.add("(max-width: 639px)", buildParallax(0.5));
-
-  window.addEventListener("load", function () {
-    ScrollTrigger.refresh();
-  });
+  window.addEventListener("scroll", onScrollOrResize, { passive: true });
+  window.addEventListener("resize", onScrollOrResize);
+  window.addEventListener("load", applyParallax);
+  applyParallax();
 })();
 
     </script>
@@ -799,12 +862,12 @@
 
             // 1) Librerías
             add("Tailwind cargó: " + (typeof window.tailwind !== "undefined"), typeof window.tailwind === "undefined");
-            add("GSAP cargó: " + (typeof window.gsap !== "undefined"), false);
-            add("ScrollTrigger cargó: " + (typeof window.ScrollTrigger !== "undefined"), false);
+            add("Elementos con parallax (data-parallax): " + document.querySelectorAll("[data-parallax]").length, false);
+            add("Elementos con entrada 3D (.mo-img): " + document.querySelectorAll(".mo-img").length, false);
             add("IntersectionObserver soportado: " + ("IntersectionObserver" in window), !("IntersectionObserver" in window));
 
             // 2) Textos que deberían animarse
-            var revealEls = Array.prototype.slice.call(document.querySelectorAll(".mo-text, .mo-btn"));
+            var revealEls = Array.prototype.slice.call(document.querySelectorAll(".mo-text, .mo-btn, .mo-img"));
             var stuck = revealEls.filter(function (el) { return !el.classList.contains("is-in"); });
             add("Textos animados en la página: " + revealEls.length, false);
             add("Textos TODAVÍA invisibles ahora mismo: " + stuck.length, stuck.length > 0);
