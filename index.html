@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<!--
+  Nail Artist · Vale Bolaños — Heredia, Costa Rica · Sitio bilingüe ES/EN
+  Adaptado a partir de una plantilla previa (Higuerón Lodge), conservando
+  la MISMA paleta de colores del original (oscura, blanco/negro), tipografía,
+  estructura, secciones, animaciones (GSAP) e iconografía.
+  Las fotos son MARCADORES por ahora (buscá "FOTO:" en cada uno).
+
+  PENDIENTES PRODUCCIÓN:
+   · Reemplazar los marcadores de foto (bloques oscuros con ícono de cámara)
+     por fotos reales.
+   · WhatsApp real → const WHATSAPP (abajo, en el script).
+   · Endpoint del formulario → FORM ENDPOINT.
+   · og:image con una URL pública una vez el sitio esté publicado.
+-->
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="meta.title">Nail Artist · Vale Bolaños — Manicure y Nail Art en Heredia, Costa Rica</title>
+    <meta name="description" data-i18n-attr="content" data-i18n="meta.desc" content="Manicure, pedicure y nail art personalizado en Heredia, Costa Rica. Diseños únicos, materiales de calidad y un espacio pensado para vos. #ValeNails">
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="canonical" href="https://valenails.example.com/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Nail Artist · Vale Bolaños">
+    <meta property="og:title" data-i18n-attr="content" data-i18n="meta.title" content="Nail Artist · Vale Bolaños — Heredia, Costa Rica">
+    <meta property="og:description" data-i18n-attr="content" data-i18n="meta.desc" content="Manicure, pedicure y nail art personalizado en Heredia, Costa Rica.">
+    <meta property="og:image" content="https://valenails.example.com/og.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0a0a'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='20' fill='%23fff' text-anchor='middle'%3EV%3C/text%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background:#0a0a0a; color:#fff; }
+        .font-serif { font-family: 'Playfair Display', serif; letter-spacing: -0.015em; }
+        .sec-title { font-weight: 500; line-height: 1.04; letter-spacing: -0.022em; }
+        .sec-lede  { font-weight: 300; color: #cbc8c2; }
+        .eyebrow   { text-transform: uppercase; letter-spacing: 0.2em; font-weight: 400; }
+        a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline:2px solid #fff; outline-offset:2px; }
+        .skip-link { position:absolute; left:1rem; top:-4rem; z-index:100; background:#fff; color:#000; padding:.6rem 1rem; border-radius:.5rem; transition:top .2s; }
+        .skip-link:focus { top:1rem; }
+        .icn { stroke:currentColor; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+        .reveal { opacity:0; transform:translateY(18px); transition:opacity .7s ease, transform .7s ease; }
+        .reveal.in { opacity:1; transform:none; }
+
+        /* ---- Efecto de carga sutil para el texto del hero ---- */
+        .hero-intro > *{ opacity:0; transform:translateY(14px); animation: hero-in .9s cubic-bezier(.2,.7,.2,1) forwards; }
+        .hero-intro > *:nth-child(1){ animation-delay:.1s; }
+        .hero-intro > *:nth-child(2){ animation-delay:.28s; }
+        .hero-intro > *:nth-child(3){ animation-delay:.46s; }
+        .hero-intro > *:nth-child(4){ animation-delay:.6s; }
+        @keyframes hero-in{ to{ opacity:1; transform:none; } }
+        .acc-panel { max-height:0; overflow:hidden; transition:max-height .35s ease; }
+        .acc-item[open-state="1"] .acc-panel { max-height:340px; }
+        .acc-item[open-state="1"] .acc-chev { transform:rotate(45deg); }
+
+        /* ---- Marcador de foto (placeholder) ---- */
+        .ph {
+            position:relative; width:100%; height:100%;
+            background: linear-gradient(150deg, #1c1c1c, #2c2c2c);
+            display:flex; align-items:center; justify-content:center; overflow:hidden;
+        }
+        .ph::after{ content:""; position:absolute; inset:0; background:
+            radial-gradient(circle at 25% 20%, rgba(255,255,255,.08), transparent 45%); }
+        .ph svg{ width:34px; height:34px; stroke:#fff; opacity:.55; position:relative; z-index:1; }
+
+        /* ---- Acordeón de fotos ("Mi trabajo") ---- */
+        .photo-acc-wrap{ display:flex; gap:.5rem; height:440px; }
+        .photo-acc{
+            position:relative; flex:1 1 0; min-width:0; border-radius:1.5rem; overflow:hidden;
+            cursor:pointer; transition:flex-grow .55s cubic-bezier(.4,0,.2,1);
+            border:1px solid rgba(255,255,255,.08);
+        }
+        .photo-acc .ph{ position:absolute; inset:0; }
+        .photo-acc .acc-scrim{ position:absolute; inset:0; background:linear-gradient(0deg, rgba(0,0,0,.7), transparent 55%); }
+        .photo-acc .acc-lbl{
+            position:absolute; left:.9rem; bottom:.9rem; color:#fff; font-weight:500; font-size:.8rem;
+            letter-spacing:.04em; white-space:nowrap;
+            writing-mode: vertical-rl; text-orientation:mixed; transform:rotate(180deg);
+            transition: all .3s ease;
+        }
+        @media (hover:hover){ .photo-acc:hover{ flex-grow:5; } }
+        .photo-acc.is-active{ flex-grow:5; }
+        .photo-acc.is-active .acc-lbl, .photo-acc:hover .acc-lbl{
+            writing-mode: horizontal-tb; transform:none; font-size:.95rem;
+        }
+        @media (max-width:640px){
+            .photo-acc-wrap{ flex-direction:column; height:auto; }
+            .photo-acc{ height:64px; flex:none; }
+            .photo-acc.is-active{ height:220px; }
+            .photo-acc .acc-lbl{ writing-mode:horizontal-tb; transform:none; font-size:.85rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} .reveal{opacity:1!important;transform:none!important;transition:none;} .photo-acc{transition:none;} *{animation-duration:.01ms!important;} }
+    </style>
+</head>
+<body class="antialiased selection:bg-white selection:text-black">
+    <a href="#main" class="skip-link" data-i18n="a11y.skip">Saltar al contenido</a>
+
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <symbol id="i-jacuzzi" viewBox="0 0 24 24"><path d="M3 13h18M5 13V7a2 2 0 0 1 4 0M4 13v4a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-4M8 6.5l-.5.8M11 6l-.5.8M14 6.5l-.5.8"/></symbol>
+        <symbol id="i-kitchen" viewBox="0 0 24 24"><path d="M6 3v7M9 3v7a3 3 0 0 1-6 0M6 12v9M18 3c-1.7 0-3 2-3 5s1 4 3 4 3-1 3-4-1.3-5-3-5ZM18 12v9"/></symbol>
+        <symbol id="i-bath" viewBox="0 0 24 24"><path d="M4 12h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-3ZM6 12V6a2 2 0 0 1 4 0M6 19l-1 2M18 19l1 2"/></symbol>
+        <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M5 12.5a10 10 0 0 1 14 0M8 16a5 5 0 0 1 8 0M12 20h.01"/></symbol>
+        <symbol id="i-tree" viewBox="0 0 24 24"><path d="M12 22v-5M12 17l-4-3M12 14l3-2M17 9a5 5 0 1 0-10 0 4 4 0 0 0 .5 8h9a4 4 0 0 0 .5-8Z"/></symbol>
+        <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7M6 10v9h12v-9M10 19v-5h4v5"/></symbol>
+        <symbol id="i-key" viewBox="0 0 24 24"><path d="M14 7a4 4 0 1 0-3.5 4L13 13.5V16h2v2h2l2-2v-2l-2-2-1.5-1.5A4 4 0 0 0 14 7Z"/></symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3ZM9 12l2 2 4-4"/></symbol>
+        <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9Z" fill="currentColor" stroke="none"/></symbol>
+        <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11ZM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/></symbol>
+        <symbol id="i-wa" viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0-7.7 13.6L3 21l4.5-1.2A9 9 0 1 0 12 3Z"/><path d="M8.5 8.5c0 4 3 6.8 6.5 7 .8 0 1.5-1 1.5-1.6 0-.3-1.8-1.2-2.1-1.2-.3 0-.6.6-.9.6-.6 0-2.4-1.6-2.4-2.3 0-.3.6-.5.6-.9 0-.3-.9-2.1-1.2-2.1-.5 0-1.6.7-1.6 1.5Z"/></symbol>
+        <symbol id="i-ig" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></symbol>
+        <symbol id="i-fb" viewBox="0 0 24 24"><path d="M14 21v-8h2.5l.5-3H14V8c0-.9.3-1.5 1.6-1.5H17V4c-.3 0-1.4-.1-2.6-.1-2.6 0-4.4 1.6-4.4 4.5V10H7v3h2.9v8Z"/></symbol>
+        <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3v11H4Z"/><circle cx="12" cy="13.5" r="3.3"/></symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+        <symbol id="i-spa" viewBox="0 0 24 24"><path d="M12 3c1.5 2 1.5 4 0 6-1.5-2-1.5-4 0-6ZM12 21c-1.5-2-1.5-4 0-6 1.5 2 1.5 4 0 6ZM3 12c2-1.5 4-1.5 6 0-2 1.5-4 1.5-6 0ZM21 12c-2-1.5-4-1.5-6 0 2 1.5 4 1.5 6 0Z"/><circle cx="12" cy="12" r="2.1"/></symbol>
+        <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3c.6 3.6 2.4 5.4 6 6-3.6.6-5.4 2.4-6 6-.6-3.6-2.4-5.4-6-6 3.6-.6 5.4-2.4 6-6Z"/><path d="M19 3.5c.3 1.2.9 1.8 2 2-1.1.2-1.7.8-2 2-.3-1.2-.9-1.8-2-2 1.1-.2 1.7-.8 2-2Z"/></symbol>
+        <symbol id="i-candle" viewBox="0 0 24 24"><path d="M12 3c1 1.2 1 2.2 0 3.2-1-1-1-2 0-3.2Z"/><path d="M9 8h6v11a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V8Z"/><path d="M9 12h6"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4"/><path d="M9 14h2M13 14h2M9 17h2"/></symbol>
+        <symbol id="i-nail" viewBox="0 0 24 24"><path d="M9 3h6l-.6 3.4a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2V7.8a2 2 0 0 1 .6-1.4L9 3Z"/><path d="M8.6 9h6.8"/></symbol>
+    </svg>
+
+    <!-- Nav -->
+    <nav class="fixed top-0 left-0 w-full p-4 flex justify-between items-center z-40">
+        <a href="#main" class="text-white font-serif text-xl tracking-wide drop-shadow-md">Vale Bolaños</a>
+        <div class="flex items-center gap-3">
+            <div class="flex items-center bg-black/40 backdrop-blur-md rounded-full p-0.5 text-xs" role="group" aria-label="Language / Idioma">
+                <button data-lang="es" class="lang-btn px-3 py-1.5 rounded-full transition-colors" aria-pressed="true">ES</button>
+                <button data-lang="en" class="lang-btn px-3 py-1.5 rounded-full transition-colors" aria-pressed="false">EN</button>
+            </div>
+            <a href="#reservar" class="bg-white text-black px-6 py-2.5 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors" data-i18n="nav.book">Agendar</a>
+        </div>
+    </nav>
+
+    <main id="main">
+        <!-- Hero -->
+        <section class="relative h-[100svh] w-full bg-black overflow-hidden">
+            <!-- FOTO: images/hero.png -->
+            <div class="absolute inset-0 w-full h-full opacity-90 scale-110" data-hero-img>
+                <img src="images/hero.png" alt="Nail art de Vale Bolaños" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg></div>
+            </div>
+            <div class="absolute inset-0 bg-black/25"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/35"></div>
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 sm:pr-16 lg:pr-24">
+                <div class="hero-intro flex flex-col items-center sm:ml-auto sm:max-w-lg">
+                <div class="flex items-center gap-1.5 mb-5 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full text-sm">
+                    <svg class="icn text-amber-300" style="width:16px;height:16px"><use href="#i-ig"/></svg>
+                    <a href="https://www.instagram.com/valnails.cr" target="_blank" rel="noopener" class="text-gray-300 underline-offset-2 hover:underline"><span data-i18n="hero.reviews">@valnails.cr en Instagram</span></a>
+                </div>
+                <h1 class="font-serif text-[clamp(2.6rem,13vw,5rem)] leading-none tracking-tight drop-shadow-lg">Nail Artist</h1>
+                <p class="mt-4 text-sm tracking-[0.18em] uppercase text-gray-200 drop-shadow" data-i18n="hero.tagline">Vale Bolaños · Manicure &amp; Nail Art · Heredia, Costa Rica</p>
+                <p class="mt-2 font-serif italic text-lg text-gray-100">#ValeNails</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sobre mí (intro con foto de Vale) -->
+        <section class="relative px-6 py-20 max-w-2xl mx-auto text-center reveal">
+            <div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mb-5" data-i18n="intro.eyebrow">Sobre mí</div>
+            <p class="sec-lede text-base mb-10" data-i18n="intro.lede">Mi historia y mi pasión por el arte de las uñas.</p>
+            <div class="w-[200px] h-[240px] mx-auto rounded-2xl overflow-hidden mb-10">
+                <!-- FOTO: images/vale.png -->
+                <img src="images/vale.png" alt="Vale Bolaños, nail artist" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="ph" style="display:none;"><svg class="icn"><use href="#i-camera"/></svg></div>
+            </div>
+            <p class="sec-lede text-base leading-relaxed max-w-lg mx-auto" data-i18n="intro.body">¡Hola! Soy Vale Bolaños, una apasionada artista de uñas con años de experiencia creando diseños únicos que realzan la belleza natural. Mi enfoque se basa en la atención al detalle, la higiene y la personalización para cada clienta, asegurando que cada set de uñas refleje su personalidad única.</p>
+            <p class="text-center text-gray-500 text-xs mt-8" data-i18n="intro.caption">Conociendo a Vale: pasión en cada diseño.</p>
+        </section>
+
+        <!-- Sobre Vale -->
+        <section class="px-6 py-20 pb-28 max-w-3xl mx-auto reveal">
+            <div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mb-8" data-i18n="about.eyebrow">El Arte</div>
+            <h2 class="font-serif sec-title text-[clamp(2.4rem,10vw,3.6rem)] mb-7" data-i18n="about.title">Perfección y detalle en cada trazo.</h2>
+            <p class="sec-lede text-lg leading-relaxed mb-6 max-w-xl" data-i18n="about.body1">Más que un servicio tradicional, cada manicura es un proceso creativo. Desde un esmaltado semipermanente clásico hasta el nail art más elaborado, el trabajo manual garantiza un acabado premium que resalta la belleza natural de tus manos.</p>
+            <p class="sec-lede text-lg leading-relaxed max-w-xl" data-i18n="about.body2">Combinamos técnicas modernas con una atención minuciosa. Trabajamos en un ambiente relajado en Heredia, con los mejores productos del mercado, para que tus uñas no solo se vean increíbles, sino que se mantengan sanas y fuertes.</p>
+            <div class="relative h-[460px] w-full mt-12">
+                <!-- FOTO: images/foto1.png -->
+                <div class="absolute right-0 top-0 w-[78%] h-[380px] rounded-3xl overflow-hidden z-0" data-parallax="-6">
+                    <img src="images/foto1.png" alt="Vale Bolaños trabajando en el estudio" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg></div>
+                </div>
+                <div class="absolute right-4 top-4 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full text-xs z-10 flex items-center gap-1.5"><svg class="icn" style="width:14px;height:14px"><use href="#i-pin"/></svg> Heredia · CR</div>
+                <!-- FOTO: images/Nail Art.png -->
+                <div class="absolute left-0 bottom-0 w-[70%] h-[290px] rounded-3xl overflow-hidden z-10 shadow-2xl" data-parallax="10">
+                    <img src="images/Nail Art.png" alt="Detalle de un set de uñas recién terminado" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mi trabajo (acordeón de fotos) -->
+        <section class="px-6 py-16 max-w-4xl mx-auto reveal">
+            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="inside.eyebrow">Mi trabajo</div></div>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6" data-i18n="inside.title">Un vistazo a mis diseños</h2>
+            <p class="text-center sec-lede text-base leading-relaxed mb-14 max-w-lg mx-auto" data-i18n="inside.sub">Pasá el cursor (o tocá en el celular) sobre cada foto para verla en grande.</p>
+            <div id="photo-accordion" class="photo-acc-wrap"></div>
+            <p class="text-center text-gray-500 text-xs mt-4" data-i18n="gal.hint">Tocá una foto para ampliarla.</p>
+        </section>
+
+        <!-- Por qué elegirme -->
+        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
+            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="amen.eyebrow">Por qué elegirme</div></div>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6" data-i18n="amen.title">Todo pensado para tu comodidad</h2>
+            <p class="text-center sec-lede text-base leading-relaxed mb-14 max-w-xl mx-auto" data-i18n="amen.sub">Desde la higiene hasta el último detalle del diseño, cuidando cada parte de tu cita.</p>
+            <div id="amen-grid" class="grid sm:grid-cols-2 gap-5"></div>
+        </section>
+
+        <!-- Banner autocuidado -->
+        <section class="relative h-[70vh] min-h-[420px] w-full my-8 reveal overflow-hidden">
+            <!-- FOTO: images/Nail Art.png -->
+            <div class="absolute inset-0 w-full h-full scale-150" data-parallax="22">
+                <img src="images/foto6.png" alt="Manos relajadas recibiendo un tratamiento de manicure spa" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg></div>
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-b from-black/25 via-black/35 to-black/55"></div>
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+                <p class="font-serif italic text-2xl mb-3 drop-shadow">#ValeNails</p>
+                <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.2rem)] max-w-xl drop-shadow-lg" data-i18n="well.title">Date el gusto que merecés</h2>
+                <p class="mt-4 text-gray-100 text-sm max-w-md drop-shadow" data-i18n="well.sub">Un ratito solo para vos, con las manos como pretexto.</p>
+            </div>
+        </section>
+
+        <!-- Heredia -->
+        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
+            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="around.eyebrow">Ubicación</div></div>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6" data-i18n="around.title">Heredia, Costa Rica</h2>
+            <p class="text-center sec-lede text-base leading-relaxed mb-14 max-w-xl mx-auto" data-i18n="around.sub">Atiendo en Heredia, con fácil acceso y coordinación de horario por WhatsApp o Instagram. Escribime y coordinamos el mejor día para tu cita.</p>
+            <div class="relative w-full h-[440px] rounded-3xl overflow-hidden">
+                <!-- FOTO: espacio / rincón del estudio de Vale -->
+                <div class="absolute inset-0 w-full h-full"><div class="ph"><svg class="icn"><use href="#i-camera"/></svg></div></div>
+                <div class="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10 max-w-md">
+                        <h3 class="font-serif text-2xl mb-2" data-i18n="around.c1.name">Un espacio pensado para vos</h3>
+                        <p class="text-gray-200 text-sm leading-relaxed" data-i18n="around.c1.desc">Cómodo, tranquilo y con todo el tiempo necesario para que tu diseño quede como lo imaginaste.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lo que dicen mis clientas -->
+        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
+            <div class="bg-[#111] rounded-[2rem] p-8 border border-white/5 text-center">
+                <div class="flex items-center justify-center gap-2 mb-2"><svg class="icn text-amber-300" style="width:26px;height:26px"><use href="#i-star"/></svg><span class="font-serif text-2xl" data-i18n="rev.eyebrow">Lo que dicen mis clientas</span></div>
+                <p class="text-gray-300 text-sm mb-8" data-i18n="rev.count">Reseñas reales, directo desde Instagram</p>
+                <div id="rev-grid" class="grid sm:grid-cols-3 gap-4 mb-8 text-left"></div>
+                <a href="https://www.instagram.com/valnails.cr" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-sm border border-white/20 rounded-full px-5 py-2.5 hover:bg-white/10 transition-colors"><span data-i18n="rev.cta">Ver más en Instagram</span><svg class="icn" style="width:16px;height:16px"><use href="#i-arrow"/></svg></a>
+            </div>
+        </section>
+
+        <!-- Antes de tu cita -->
+        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
+            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="know.eyebrow">Antes de tu cita</div></div>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6" data-i18n="know.title">Lo que debes saber</h2>
+            <p class="text-center sec-lede text-base leading-relaxed mb-12 max-w-xl mx-auto" data-i18n="know.sub">Unos detalles simples para que tu cita fluya bien, de principio a fin.</p>
+            <ul id="know-list" class="flex flex-col gap-3 mb-12"></ul>
+            <div class="grid sm:grid-cols-2 gap-4" id="policy-grid"></div>
+        </section>
+
+        <!-- FAQ acordeón -->
+        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
+            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="faq.eyebrow">Preguntas frecuentes</div></div>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-12" data-i18n="faq.title">Antes de escribirme</h2>
+            <div id="faq-list" class="flex flex-col gap-3"></div>
+        </section>
+
+        <!-- Mapa -->
+        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
+            <div class="flex items-center gap-2 justify-center mb-6 text-gray-300"><svg class="icn" style="width:18px;height:18px"><use href="#i-pin"/></svg><span class="text-xs uppercase tracking-[0.18em]" data-i18n="map.eyebrow">Cómo llegar</span></div>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-10" data-i18n="map.title">Heredia, Costa Rica</h2>
+            <div class="rounded-3xl overflow-hidden border border-white/10 h-[360px]">
+                <iframe title="Mapa de Heredia" class="w-full h-full" style="border:0; filter:grayscale(0.3) contrast(1.05);" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Heredia%2C%20Costa%20Rica&output=embed"></iframe>
+            </div>
+        </section>
+
+        <!-- Agendar -->
+        <section id="reservar" class="px-6 py-16 max-w-3xl mx-auto scroll-mt-20 reveal">
+            <div class="bg-[#111] rounded-[2rem] p-8 border border-white/5">
+                <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="book.eyebrow">Agenda tu cita</div></div>
+                <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6" data-i18n="book.title">Reservemos tu espacio</h2>
+                <p class="text-center sec-lede text-base leading-relaxed mb-10 max-w-md mx-auto px-2" data-i18n="book.sub">Escribime por WhatsApp o Instagram, o dejame tu consulta acá abajo. Te respondo pronto.</p>
+                <div class="flex flex-col sm:flex-row gap-3 mb-8">
+                    <a id="wa-btn-inline" href="#" target="_blank" rel="noopener" class="flex-1 flex items-center justify-center gap-2 bg-white text-black font-medium py-4 rounded-xl hover:bg-gray-100 transition-colors"><svg class="icn" style="width:18px;height:18px"><use href="#i-wa"/></svg><span data-i18n="book.whatsapp">Escribir por WhatsApp</span></a>
+                    <a href="https://www.instagram.com/valnails.cr" target="_blank" rel="noopener" class="flex-1 flex items-center justify-center gap-2 border border-white/20 py-4 rounded-xl hover:bg-white/10 transition-colors"><svg class="icn" style="width:18px;height:18px"><use href="#i-ig"/></svg><span data-i18n="book.airbnb">Seguir en Instagram</span></a>
+                </div>
+                <div class="flex items-center gap-4 mb-8 text-xs text-gray-500"><div class="flex-1 h-px bg-white/10"></div><span data-i18n="book.or">o dejame tu consulta</span><div class="flex-1 h-px bg-white/10"></div></div>
+                <!-- FORM ENDPOINT -->
+                <form id="booking-form" novalidate class="flex flex-col gap-4" action="#" method="post">
+                    <div><label for="f-name" class="sr-only" data-i18n="form.name">Nombre completo</label><input id="f-name" name="name" type="text" required autocomplete="name" data-i18n-attr="placeholder" data-i18n="form.name" placeholder="Nombre completo" class="w-full bg-[#1a1a1a] text-white px-5 py-4 rounded-xl placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-white/40 transition-all"></div>
+                    <div><label for="f-email" class="sr-only" data-i18n="form.email">WhatsApp o correo</label><input id="f-email" name="email" type="text" required autocomplete="email" data-i18n-attr="placeholder" data-i18n="form.email" placeholder="WhatsApp o correo" class="w-full bg-[#1a1a1a] text-white px-5 py-4 rounded-xl placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-white/40 transition-all"></div>
+                    <div><label for="f-dates" class="sr-only" data-i18n="form.dates">Servicio de interés</label><input id="f-dates" name="dates" type="text" data-i18n-attr="placeholder" data-i18n="form.dates" placeholder="Servicio de interés" class="w-full bg-[#1a1a1a] text-white px-5 py-4 rounded-xl placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-white/40 transition-all"></div>
+                    <div><label for="f-msg" class="sr-only" data-i18n="form.msg">Tu mensaje</label><textarea id="f-msg" name="message" rows="4" data-i18n-attr="placeholder" data-i18n="form.msg" placeholder="Contame la idea de diseño o tu disponibilidad" class="w-full bg-[#1a1a1a] text-white px-5 py-4 rounded-xl placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-white/40 transition-all resize-none"></textarea></div>
+                    <button type="submit" class="w-full bg-white text-black font-medium py-4 rounded-xl mt-1 hover:bg-gray-100 transition-colors" data-i18n="form.submit">Enviar consulta</button>
+                    <p id="form-status" role="status" aria-live="polite" class="text-center text-sm min-h-[1.25rem]"></p>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-white text-black w-full px-6 py-20">
+        <h2 class="font-serif text-[clamp(2.2rem,10vw,3.4rem)] leading-none tracking-tight mb-3">Nail Artist · Vale Bolaños</h2>
+        <p class="font-serif italic text-lg mb-10 text-gray-700">#ValeNails</p>
+        <nav aria-label="Footer" class="mb-12"><ul class="flex flex-col gap-4 font-medium text-base">
+            <li><a href="#reservar" class="inline-flex items-center gap-3 hover:opacity-60 transition-opacity"><svg class="icn" style="width:15px;height:15px"><use href="#i-arrow"/></svg> <span data-i18n="nav.book">Agendar</span></a></li>
+            <li><a href="https://www.instagram.com/valnails.cr" target="_blank" rel="noopener" class="inline-flex items-center gap-3 hover:opacity-60 transition-opacity"><svg class="icn" style="width:15px;height:15px"><use href="#i-ig"/></svg> Instagram</a></li>
+            <li><a href="https://www.facebook.com/share/1D2kMnFu5p/?mibextid=wwXIfr" target="_blank" rel="noopener" class="inline-flex items-center gap-3 hover:opacity-60 transition-opacity"><svg class="icn" style="width:15px;height:15px"><use href="#i-fb"/></svg> Facebook</a></li>
+        </ul></nav>
+        <p class="text-sm text-gray-500">Heredia, Costa Rica · © <span id="yr"></span> Vale Bolaños · Nail Artist</p>
+        <p class="text-xs text-gray-400 mt-2">Creado por Vetric Group</p>
+    </footer>
+
+    <a id="wa-float" href="#" target="_blank" rel="noopener" aria-label="WhatsApp" class="fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform"><svg class="icn" style="width:26px;height:26px"><use href="#i-wa"/></svg></a>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="fixed inset-0 z-50 bg-black/90 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Imagen ampliada">
+        <button id="lb-close" aria-label="Cerrar" class="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"><svg class="icn" style="width:22px;height:22px"><use href="#i-close"/></svg></button>
+        <div id="lb-body" class="w-full max-w-2xl h-[70vh] rounded-2xl overflow-hidden"><div class="ph"><svg class="icn"><use href="#i-camera"/></svg></div></div>
+    </div>
+
+    <script>
+    (function () {
+        const WHATSAPP = "50600000000"; // <-- reemplazá por el WhatsApp real de Vale (formato 506XXXXXXXX, sin +)
+        const $ = s => document.querySelector(s);
+
+        // Paneles del acordeón de fotos — "Mi trabajo" (3 fotos reales)
+        const PORTFOLIO = [
+            { img: "images/foto2.png", k: "pf.1" },
+            { img: "images/foto4.png", k: "pf.2" },
+            { img: "images/foto5.png", k: "pf.3" }
+        ];
+
+        const AMEN = [
+            {icon:"i-spa",k:"am.spa"},{icon:"i-shield",k:"am.hygiene"},{icon:"i-sparkle",k:"am.materials"},{icon:"i-candle",k:"am.ambience"},
+            {icon:"i-home",k:"am.studio"},{icon:"i-calendar",k:"am.booking"},{icon:"i-ig",k:"am.social"},{icon:"i-nail",k:"am.full"}
+        ];
+        const FAQ = ["faq.1","faq.2","faq.3","faq.4","faq.5","faq.6","faq.7"];
+
+        const I18N = {
+          es: {
+            "meta.title":"Nail Artist · Vale Bolaños — Manicure y Nail Art en Heredia, Costa Rica",
+            "meta.desc":"Manicure, pedicure y nail art personalizado en Heredia, Costa Rica. Diseños únicos, materiales de calidad y un espacio pensado para vos. #ValeNails",
+            "a11y.skip":"Saltar al contenido","nav.book":"Agendar",
+            "hero.reviews":"@valnails.cr en Instagram","hero.tagline":"Vale Bolaños · Manicure & Nail Art · Heredia, Costa Rica",
+            "intro.eyebrow":"Sobre mí","intro.lede":"Mi historia y mi pasión por el arte de las uñas.",
+            "intro.body":"¡Hola! Soy Vale Bolaños, una apasionada artista de uñas con años de experiencia creando diseños únicos que realzan la belleza natural. Mi enfoque se basa en la atención al detalle, la higiene y la personalización para cada clienta, asegurando que cada set de uñas refleje su personalidad única.",
+            "intro.caption":"Conociendo a Vale: pasión en cada diseño.",
+            "about.eyebrow":"El Arte","about.title":"Perfección y detalle en cada trazo.",
+            "about.body1":"Más que un servicio tradicional, cada manicura es un proceso creativo. Desde un esmaltado semipermanente clásico hasta el nail art más elaborado, el trabajo manual garantiza un acabado premium que resalta la belleza natural de tus manos.",
+            "about.body2":"Combinamos técnicas modernas con una atención minuciosa. Trabajamos en un ambiente relajado en Heredia, con los mejores productos del mercado, para que tus uñas no solo se vean increíbles, sino que se mantengan sanas y fuertes.",
+            "inside.eyebrow":"Mi trabajo","inside.title":"Un vistazo a mis diseños",
+            "inside.sub":"Pasá el cursor (o tocá en el celular) sobre cada foto para verla en grande.",
+            "pf.1":"Francesita en rojo","pf.2":"Nail art abstracto","pf.3":"Floral & lunares",
+            "amen.eyebrow":"Por qué elegirme","amen.title":"Todo pensado para tu comodidad",
+            "amen.sub":"Desde la higiene hasta el último detalle del diseño, cuidando cada parte de tu cita.",
+            "am.spa":"Spa de manos y pies|Tratamientos de exfoliación e hidratación antes de cada esmaltado.",
+            "am.hygiene":"Higiene y bioseguridad|Herramientas desinfectadas y protocolo de limpieza en cada cita.",
+            "am.materials":"Materiales premium|Esmaltes semipermanentes y productos de calidad, cuidando la salud de tu uña.",
+            "am.ambience":"Ambiente relajante|Un espacio tranquilo para desconectarte mientras te consentís.",
+            "am.studio":"Estudio acogedor|Cómodo, limpio y con buena luz para lograr el color exacto que buscás.",
+            "am.booking":"Fácil de agendar|Coordiná tu cita por WhatsApp o Instagram en minutos.",
+            "am.social":"Seguime en redes|Mirá trabajos recientes y disponibilidad en Instagram y Facebook.",
+            "am.full":"Manicure y pedicure completo|Cuidado de cutícula, forma, esmaltado y nail art en una sola cita.",
+            "well.title":"Date el gusto que merecés","well.sub":"Un ratito solo para vos, con las manos como pretexto.",
+            "around.eyebrow":"Ubicación","around.title":"Heredia, Costa Rica",
+            "around.sub":"Atiendo en Heredia, con fácil acceso y coordinación de horario por WhatsApp o Instagram. Escribime y coordinamos el mejor día para tu cita.",
+            "around.c1.name":"Un espacio pensado para vos","around.c1.desc":"Cómodo, tranquilo y con todo el tiempo necesario para que tu diseño quede como lo imaginaste.",
+            "gal.hint":"Tocá una foto para ampliarla.",
+            "rev.eyebrow":"Lo que dicen mis clientas","rev.count":"Reseñas reales, directo desde Instagram",
+            "rev.h1":"Diseño exactamente como lo pedí","rev.t1":"“Vale entendió perfecto la idea que le mostré en fotos.”",
+            "rev.h2":"Puntualidad y buen trato","rev.t2":"“Siempre a tiempo y muy atenta durante toda la cita.”",
+            "rev.h3":"Duración del semipermanente","rev.t3":"“Me duró perfecto varias semanas sin despegarse.”",
+            "rev.cta":"Ver más en Instagram",
+            "know.eyebrow":"Antes de tu cita","know.title":"Lo que debes saber",
+            "know.sub":"Unos detalles simples para que tu cita fluya bien, de principio a fin.",
+            "know.1":"Llegá con las uñas limpias, sin esmalte de gel u otro producto previo si es posible.",
+            "know.2":"El tiempo de cada servicio puede variar según el diseño elegido.",
+            "know.3":"Podés traer fotos de referencia; juntas ajustamos el diseño a lo que tus uñas permiten.",
+            "know.4":"Si tenés alguna alergia o sensibilidad, contámelo antes de iniciar el servicio.",
+            "know.5":"Los cupos son limitados por día, así que te recomiendo agendar con anticipación.",
+            "pol.checkin.t":"Horario","pol.checkin.d":"Coordinado por cita, escribime con anticipación por WhatsApp.",
+            "pol.checkout.t":"Duración","pol.checkout.d":"Entre 45 y 90 minutos según el servicio y diseño.",
+            "pol.guests.t":"Reservas","pol.guests.d":"Se agenda directo por WhatsApp o Instagram.",
+            "pol.cancel.t":"Cancelación","pol.cancel.d":"Avisame con al menos 24 h de anticipación si necesitás cancelar o reprogramar.",
+            "faq.eyebrow":"Preguntas frecuentes","faq.title":"Antes de escribirme",
+            "faq.1":"¿Cuánto dura el esmaltado semipermanente?|En promedio entre 2 y 3 semanas, dependiendo del cuidado en casa.",
+            "faq.2":"¿Necesito cita o es por orden de llegada?|Siempre por cita, para dedicarte el tiempo completo que tu diseño necesita.",
+            "faq.3":"¿Puedo llevar fotos de referencia?|Sí, es lo ideal. Vemos juntas qué tan viable es el diseño según tus uñas.",
+            "faq.4":"¿Qué formas de pago aceptan?|Efectivo y SINPE Móvil. Te confirmo el detalle al agendar.",
+            "faq.5":"¿Cuánto tiempo toma cada servicio?|Entre 45 y 90 minutos, según si es manicure, pedicure o uñas esculpidas.",
+            "faq.6":"¿Atienden a domicilio?|Por ahora las citas son en el estudio en Heredia. Consultame por WhatsApp si tenés un caso especial.",
+            "faq.7":"¿Qué pasa si necesito cancelar?|Avisame con 24 h de anticipación por WhatsApp para reprogramar sin problema.",
+            "map.eyebrow":"Cómo llegar","map.title":"Heredia, Costa Rica",
+            "book.eyebrow":"Agenda tu cita","book.title":"Reservemos tu espacio",
+            "book.sub":"Escribime por WhatsApp o Instagram, o dejame tu consulta acá abajo. Te respondo pronto.",
+            "book.airbnb":"Seguir en Instagram","book.whatsapp":"Escribir por WhatsApp","book.or":"o dejame tu consulta",
+            "form.name":"Nombre completo","form.email":"WhatsApp o correo","form.dates":"Servicio de interés","form.msg":"Contame la idea de diseño o tu disponibilidad","form.submit":"Enviar consulta",
+            "form.ok":"¡Gracias! Recibí tu consulta y te respondo pronto.","form.err":"Por favor completá tu nombre y un WhatsApp o correo válido.",
+            "foot.cabins":"Servicios","wa.msg":"¡Hola Vale! Me gustaría agendar una cita.",
+            "alt.cabin":"Foto de trabajo de Nail Artist Vale Bolaños"
+          },
+          en: {
+            "meta.title":"Nail Artist · Vale Bolaños — Manicure & Nail Art in Heredia, Costa Rica",
+            "meta.desc":"Manicure, pedicure and custom nail art in Heredia, Costa Rica. Unique designs, quality materials and a space made for you. #ValeNails",
+            "a11y.skip":"Skip to content","nav.book":"Book",
+            "hero.reviews":"@valnails.cr on Instagram","hero.tagline":"Vale Bolaños · Manicure & Nail Art · Heredia, Costa Rica",
+            "intro.eyebrow":"About me","intro.lede":"My story and my passion for nail art.",
+            "intro.body":"Hi! I'm Vale Bolaños, a passionate nail artist with years of experience creating unique designs that enhance natural beauty. My approach is built on attention to detail, hygiene and personalization for every client, making sure each set reflects her own personality.",
+            "intro.caption":"Getting to know Vale: passion in every design.",
+            "about.eyebrow":"The Craft","about.title":"Perfection and detail in every stroke.",
+            "about.body1":"More than a traditional service, every manicure is a creative process. From a classic gel polish to the most elaborate nail art, the handmade work guarantees a premium finish that highlights the natural beauty of your hands.",
+            "about.body2":"We combine modern techniques with meticulous attention. We work in a relaxed setting in Heredia, with the best products on the market, so your nails not only look amazing but stay healthy and strong.",
+            "inside.eyebrow":"My work","inside.title":"A look at my designs",
+            "inside.sub":"Hover (or tap on mobile) over each photo to see it larger.",
+            "pf.1":"Red French tips","pf.2":"Abstract nail art","pf.3":"Floral & polka dots",
+            "amen.eyebrow":"Why choose me","amen.title":"Every detail thought through for you",
+            "amen.sub":"From hygiene to the finest design detail, every part of your visit is taken care of.",
+            "am.spa":"Hand & foot spa|Exfoliation and hydration treatments before every polish.",
+            "am.hygiene":"Hygiene & safety|Sanitized tools and a cleaning protocol at every appointment.",
+            "am.materials":"Premium materials|Gel polishes and quality products that look after your nail's health.",
+            "am.ambience":"Relaxing atmosphere|A calm space to unwind while you're pampered.",
+            "am.studio":"Cozy studio|Comfortable, clean, and well lit to get the exact color you're after.",
+            "am.booking":"Easy to book|Schedule your appointment on WhatsApp or Instagram in minutes.",
+            "am.social":"Follow along|See recent work and availability on Instagram and Facebook.",
+            "am.full":"Full manicure & pedicure|Cuticle care, shaping, polish and nail art in a single visit.",
+            "well.title":"Treat yourself, you deserve it","well.sub":"A little time just for you, with your hands as the excuse.",
+            "around.eyebrow":"Location","around.title":"Heredia, Costa Rica",
+            "around.sub":"I work out of Heredia, with easy access and scheduling via WhatsApp or Instagram. Message me and we'll find the best day for your appointment.",
+            "around.c1.name":"A space made for you","around.c1.desc":"Comfortable, quiet, and with all the time your design needs to come out exactly as you imagined.",
+            "gal.hint":"Tap a photo to enlarge it.",
+            "rev.eyebrow":"What my clients say","rev.count":"Real reviews, straight from Instagram",
+            "rev.h1":"Design exactly as I asked","rev.t1":"“Vale nailed the idea I showed her in photos.”",
+            "rev.h2":"On time and attentive","rev.t2":"“Always punctual and very attentive throughout the visit.”",
+            "rev.h3":"Gel polish that lasts","rev.t3":"“Held up perfectly for weeks without chipping.”",
+            "rev.cta":"See more on Instagram",
+            "know.eyebrow":"Before your visit","know.title":"What you should know",
+            "know.sub":"A few simple details so your appointment goes smoothly, start to finish.",
+            "know.1":"Come with clean nails, ideally without existing gel polish or other product.",
+            "know.2":"Appointment length can vary depending on the design you choose.",
+            "know.3":"You're welcome to bring reference photos; together we'll adapt the design to what your nails allow.",
+            "know.4":"Let me know beforehand about any allergy or sensitivity.",
+            "know.5":"Daily slots are limited, so booking ahead is recommended.",
+            "pol.checkin.t":"Hours","pol.checkin.d":"By appointment — message me ahead of time on WhatsApp.",
+            "pol.checkout.t":"Duration","pol.checkout.d":"Between 45 and 90 minutes depending on the service and design.",
+            "pol.guests.t":"Booking","pol.guests.d":"Scheduled directly via WhatsApp or Instagram.",
+            "pol.cancel.t":"Cancellation","pol.cancel.d":"Please give at least 24 h notice to cancel or reschedule.",
+            "faq.eyebrow":"FAQ","faq.title":"Before you message me",
+            "faq.1":"How long does gel polish last?|Usually 2 to 3 weeks, depending on at-home care.",
+            "faq.2":"Do I need an appointment?|Yes, always — so I can give your design my full attention.",
+            "faq.3":"Can I bring reference photos?|Yes, that's ideal. We'll check together how well it works for your nails.",
+            "faq.4":"What payment methods do you accept?|Cash and SINPE Móvil. I'll confirm details when you book.",
+            "faq.5":"How long does each service take?|Between 45 and 90 minutes, depending on manicure, pedicure or sculpted nails.",
+            "faq.6":"Do you offer home visits?|Right now appointments are at the studio in Heredia. Message me on WhatsApp for special cases.",
+            "faq.7":"What if I need to cancel?|Give me 24 h notice on WhatsApp and we'll reschedule without any issue.",
+            "map.eyebrow":"Getting here","map.title":"Heredia, Costa Rica",
+            "book.eyebrow":"Book","book.title":"Let's save your spot",
+            "book.sub":"Message me on WhatsApp or Instagram, or leave your inquiry below. I'll get back to you soon.",
+            "book.airbnb":"Follow on Instagram","book.whatsapp":"Message on WhatsApp","book.or":"or send an inquiry",
+            "form.name":"Full name","form.email":"WhatsApp or email","form.dates":"Service you're interested in","form.msg":"Tell me your design idea or availability","form.submit":"Send inquiry",
+            "form.ok":"Thank you! I've received your inquiry and will reply soon.","form.err":"Please enter your name and a valid WhatsApp number or email.",
+            "foot.cabins":"Services","wa.msg":"Hi Vale! I'd like to book an appointment.",
+            "alt.cabin":"Nail Artist Vale Bolaños work photo"
+          }
+        };
+
+        let lang = "es";
+        const t = k => (I18N[lang][k] != null ? I18N[lang][k] : k);
+        const waLink = () => "https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(t("wa.msg"));
+        const phSVG = () => `<div class="ph"><svg class="icn"><use href="#i-camera"/></svg></div>`;
+
+        function renderDynamic() {
+            document.getElementById("photo-accordion").innerHTML = PORTFOLIO.map((p) => `
+                <div class="photo-acc gal-item" data-full="${p.img}" tabindex="0" role="button" aria-label="${t(p.k)}">
+                    <img src="${p.img}" alt="${t(p.k)} — ${t('alt.cabin')}" class="w-full h-full object-cover" style="position:absolute;inset:0;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="ph" style="display:none;"><svg class="icn"><use href="#i-camera"/></svg></div>
+                    <div class="acc-scrim"></div><span class="acc-lbl">${t(p.k)}</span>
+                </div>`).join("");
+
+            document.getElementById("amen-grid").innerHTML = AMEN.map(a => {
+                const [ti,de] = t(a.k).split("|");
+                return `<div class="bg-[#111] rounded-2xl p-5 border border-white/5 flex gap-4">
+                    <svg class="icn text-gray-200 shrink-0 mt-0.5" style="width:22px;height:22px"><use href="#${a.icon}"/></svg>
+                    <div><h3 class="font-medium mb-1">${ti}</h3><p class="text-gray-400 text-sm leading-relaxed">${de}</p></div></div>`;
+            }).join("");
+
+            const rev = [["rev.h1","rev.t1"],["rev.h2","rev.t2"],["rev.h3","rev.t3"]];
+            document.getElementById("rev-grid").innerHTML = rev.map(([h,d]) => `
+                <div class="bg-[#0a0a0a] rounded-2xl p-5 border border-white/5"><h3 class="font-medium mb-1.5 text-sm">${t(h)}</h3><p class="text-gray-400 text-sm leading-relaxed">${t(d)}</p></div>`).join("");
+
+            document.getElementById("know-list").innerHTML = ["know.1","know.2","know.3","know.4","know.5"].map(k => `
+                <li class="flex gap-3 text-gray-300 text-sm leading-relaxed"><span class="mt-1.5 shrink-0 w-1.5 h-1.5 rounded-full bg-gray-500"></span>${t(k)}</li>`).join("");
+
+            const pol = [["pol.checkin.t","pol.checkin.d"],["pol.checkout.t","pol.checkout.d"],["pol.guests.t","pol.guests.d"],["pol.cancel.t","pol.cancel.d"]];
+            document.getElementById("policy-grid").innerHTML = pol.map(([h,d]) => `
+                <div class="bg-[#111] rounded-2xl p-5 border border-white/5"><h3 class="font-medium mb-1 text-sm">${t(h)}</h3><p class="text-gray-400 text-sm leading-relaxed">${t(d)}</p></div>`).join("");
+
+            document.getElementById("faq-list").innerHTML = FAQ.map((k,i) => {
+                const [q,a] = t(k).split("|");
+                return `<div class="acc-item bg-[#111] rounded-2xl border border-white/5 overflow-hidden" open-state="0">
+                    <button class="acc-btn w-full flex items-center justify-between gap-4 text-left px-5 py-4" aria-expanded="false">
+                        <span class="font-medium">${q}</span>
+                        <svg class="acc-chev icn shrink-0 transition-transform" style="width:18px;height:18px"><use href="#i-plus"/></svg>
+                    </button>
+                    <div class="acc-panel"><p class="px-5 pb-5 text-gray-400 text-sm leading-relaxed">${a}</p></div></div>`;
+            }).join("");
+            bindAccordion();
+            bindGallery();
+        }
+
+        function bindAccordion(){
+            document.querySelectorAll(".acc-item").forEach(it => {
+                const btn = it.querySelector(".acc-btn");
+                btn.addEventListener("click", () => {
+                    const open = it.getAttribute("open-state") === "1";
+                    it.setAttribute("open-state", open ? "0" : "1");
+                    btn.setAttribute("aria-expanded", open ? "false" : "true");
+                });
+            });
+        }
+
+        const lb = document.getElementById("lightbox"), lbBody = document.getElementById("lb-body");
+        function openLb(src){
+            lbBody.innerHTML = src
+                ? `<img src="${src}" alt="" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='${phSVG().replace(/'/g,"\\'")}';">`
+                : phSVG();
+            lb.classList.remove("hidden"); lb.classList.add("flex"); document.body.style.overflow="hidden";
+        }
+        function closeLb(){ lb.classList.add("hidden"); lb.classList.remove("flex"); document.body.style.overflow=""; }
+        function bindGallery(){
+            document.querySelectorAll(".photo-acc").forEach(b => {
+                b.addEventListener("click", () => {
+                    const group = b.closest("#photo-accordion");
+                    group.querySelectorAll(".photo-acc").forEach(o => o.classList.remove("is-active"));
+                    b.classList.add("is-active");
+                    if (b.classList.contains("gal-item")) openLb(b.dataset.full);
+                });
+                b.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); b.click(); } });
+            });
+        }
+        document.getElementById("lb-close").addEventListener("click", closeLb);
+        lb.addEventListener("click", e => { if (e.target === lb) closeLb(); });
+        document.addEventListener("keydown", e => { if (e.key === "Escape" && !lb.classList.contains("hidden")) closeLb(); });
+
+        function apply(l) {
+            lang = l;
+            const dict = I18N[l];
+            document.documentElement.lang = l;
+            document.querySelectorAll("[data-i18n]").forEach(el => {
+                const v = dict[el.getAttribute("data-i18n")];
+                if (v == null) return;
+                const attr = el.getAttribute("data-i18n-attr");
+                if (attr) el.setAttribute(attr, v); else el.textContent = v;
+            });
+            document.querySelectorAll(".lang-btn").forEach(b => {
+                const on = b.dataset.lang === l;
+                b.setAttribute("aria-pressed", on ? "true":"false");
+                b.style.background = on ? "#fff":"transparent"; b.style.color = on ? "#000":"#fff";
+            });
+            renderDynamic();
+            document.getElementById("wa-float").href = waLink();
+            document.getElementById("wa-btn-inline").href = waLink();
+        }
+
+        document.querySelectorAll(".lang-btn").forEach(b => b.addEventListener("click", () => apply(b.dataset.lang)));
+
+        const form = document.getElementById("booking-form"), status = document.getElementById("form-status");
+        form.addEventListener("submit", e => {
+            e.preventDefault();
+            const name = form.name.value.trim(), contact = form.email.value.trim();
+            const ok = name && contact.length > 3;
+            status.style.color = ok ? "#86efac":"#fca5a5";
+            status.textContent = ok ? t("form.ok") : t("form.err");
+            if (ok) form.reset();
+        });
+
+        // Scroll reveals + parallax are handled by the GSAP module (animations.js) loaded below.
+
+        document.getElementById("yr").textContent = new Date().getFullYear();
+        apply("es");
+    })();
+    </script>
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"NailSalon","name":"Nail Artist · Vale Bolaños","description":"Manicure, pedicure y nail art personalizado en Heredia, Costa Rica.","address":{"@type":"PostalAddress","addressLocality":"Heredia","addressCountry":"CR"},"sameAs":["https://www.instagram.com/valnails.cr","https://www.facebook.com/share/1D2kMnFu5p/?mibextid=wwXIfr"],"url":"https://valenails.example.com/"}
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <!-- animations.js (misma lógica de la plantilla original) -->
+    <script>
+/* =====================================================================
+   Nail Artist · Vale Bolaños — animations.js
+   GSAP + ScrollTrigger · Vanilla JS · mobile-first · minimalista/editorial
+   (misma lógica de la plantilla original, sin cambios funcionales)
+   ===================================================================== */
+
+(function () {
+  "use strict";
+
+  var prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var ready = window.gsap && window.ScrollTrigger;
+
+  if (!ready || prefersReduced) {
+    document.querySelectorAll(".reveal").forEach(function (el) {
+      el.style.opacity = "1";
+      el.style.transform = "none";
+    });
+    return;
+  }
+
+  gsap.registerPlugin(ScrollTrigger);
+  ScrollTrigger.config({ ignoreMobileResize: true });
+
+  gsap.set(".reveal", { opacity: 0, y: 28 });
+
+  ScrollTrigger.batch(".reveal", {
+    start: "top 85%",
+    once: true,
+    onEnter: function (els) {
+      gsap.to(els, {
+        opacity: 1,
+        y: 0,
+        duration: 1.1,
+        ease: "power3.out",
+        stagger: 0.1,
+        overwrite: true
+      });
+    }
+  });
+
+  var hero = document.querySelector("[data-hero-img]");
+  if (hero) {
+    gsap.to(hero, {
+      yPercent: 14,
+      ease: "none",
+      scrollTrigger: {
+        trigger: hero.closest("section"),
+        start: "top top",
+        end: "bottom top",
+        scrub: true
+      }
+    });
+  }
+
+  var mm = gsap.matchMedia();
+
+  function buildParallax(factor) {
+    return function () {
+      gsap.utils.toArray("[data-parallax]").forEach(function (el) {
+        var amt = (parseFloat(el.dataset.parallax) || 0) * factor;
+        gsap.fromTo(
+          el,
+          { yPercent: -amt },
+          {
+            yPercent: amt,
+            ease: "none",
+            scrollTrigger: {
+              trigger: el.closest("section"),
+              start: "top bottom",
+              end: "bottom top",
+              scrub: true
+            }
+          }
+        );
+      });
+    };
+  }
+
+  mm.add("(min-width: 640px)", buildParallax(1));
+  mm.add("(max-width: 639px)", buildParallax(0.45));
+
+  window.addEventListener("load", function () {
+    ScrollTrigger.refresh();
+  });
+})();
+
+    </script>
+</body>
+</html>
