@@ -42,16 +42,27 @@
         .skip-link { position:absolute; left:1rem; top:-4rem; z-index:100; background:#fff; color:#000; padding:.6rem 1rem; border-radius:.5rem; transition:top .2s; }
         .skip-link:focus { top:1rem; }
         .icn { stroke:currentColor; fill:none; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
-        .reveal { opacity:0; transform:translateY(18px); transition:opacity .7s ease, transform .7s ease; }
-        .reveal.in { opacity:1; transform:none; }
 
-        /* ---- Efecto de carga sutil para el texto del hero ---- */
-        .hero-intro > *{ opacity:0; transform:translateY(14px); animation: hero-in .9s cubic-bezier(.2,.7,.2,1) forwards; }
-        .hero-intro > *:nth-child(1){ animation-delay:.1s; }
-        .hero-intro > *:nth-child(2){ animation-delay:.28s; }
-        .hero-intro > *:nth-child(3){ animation-delay:.46s; }
-        .hero-intro > *:nth-child(4){ animation-delay:.6s; }
-        @keyframes hero-in{ to{ opacity:1; transform:none; } }
+        /* =====================================================================
+           Sistema de motion — diseñado desde cero
+           Regla única para todo el texto: desliza de izquierda a derecha,
+           nunca desde abajo. Curva cubic-bezier(0.22,1,0.36,1) (easeOutQuint),
+           sin rebote/overshoot. Disparado por scroll (una sola vez, al entrar
+           en el viewport), con retraso escalonado entre elementos.
+           ===================================================================== */
+        :root{ --ease-premium: cubic-bezier(0.22,1,0.36,1); }
+
+        /* Por defecto el texto está SIEMPRE visible (transición segura ante fallos de red/JS).
+           Solo se oculta para animar si el JS llegó a confirmar que puede hacerlo
+           (agrega "js-motion" a <html> de forma síncrona, sin esperar nada). */
+        .mo-text, .mo-btn{ transition: opacity 1s var(--ease-premium), transform 1s var(--ease-premium); }
+        html.js-motion .mo-text{ opacity:0; transform:translateX(-72px); }
+        html.js-motion .mo-btn{ opacity:0; transform:translateX(-60px); transition-duration:.9s; }
+        .mo-text.is-in, .mo-btn.is-in{ opacity:1!important; transform:translateX(0)!important; }
+
+        /* Magnetic hover sutil — sin elastic/bounce, misma curva del sistema */
+        .magnetic{ display:inline-flex; transition: transform .45s var(--ease-premium); }
+
         .acc-panel { max-height:0; overflow:hidden; transition:max-height .35s ease; }
         .acc-item[open-state="1"] .acc-panel { max-height:340px; }
         .acc-item[open-state="1"] .acc-chev { transform:rotate(45deg); }
@@ -59,12 +70,13 @@
         /* ---- Marcador de foto (placeholder) ---- */
         .ph {
             position:relative; width:100%; height:100%;
-            background: linear-gradient(150deg, #1c1c1c, #2c2c2c);
-            display:flex; align-items:center; justify-content:center; overflow:hidden;
+            background: linear-gradient(150deg, #262626, #3a3a3a);
+            display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.5rem; overflow:hidden;
         }
         .ph::after{ content:""; position:absolute; inset:0; background:
-            radial-gradient(circle at 25% 20%, rgba(255,255,255,.08), transparent 45%); }
-        .ph svg{ width:34px; height:34px; stroke:#fff; opacity:.55; position:relative; z-index:1; }
+            radial-gradient(circle at 25% 20%, rgba(255,255,255,.12), transparent 45%); }
+        .ph svg{ width:30px; height:30px; stroke:#fff; opacity:.7; position:relative; z-index:1; }
+        .ph small{ position:relative; z-index:1; color:rgba(255,255,255,.55); font-size:.65rem; letter-spacing:.04em; text-align:center; padding:0 .5rem; }
 
         /* ---- Acordeón de fotos ("Mi trabajo") ---- */
         .photo-acc-wrap{ display:flex; gap:.5rem; height:440px; }
@@ -93,7 +105,13 @@
             .photo-acc .acc-lbl{ writing-mode:horizontal-tb; transform:none; font-size:.85rem; }
         }
 
-        @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto;} .reveal{opacity:1!important;transform:none!important;transition:none;} .photo-acc{transition:none;} *{animation-duration:.01ms!important;} }
+        @media (prefers-reduced-motion: reduce){
+            html{scroll-behavior:auto;}
+            .mo-text,.mo-btn{opacity:1!important;transform:none!important;transition:none;}
+            .photo-acc{transition:none;}
+            .magnetic{transition:none!important;}
+            *{animation-duration:.01ms!important;}
+        }
     </style>
 </head>
 <body class="antialiased selection:bg-white selection:text-black">
@@ -132,7 +150,7 @@
                 <button data-lang="es" class="lang-btn px-3 py-1.5 rounded-full transition-colors" aria-pressed="true">ES</button>
                 <button data-lang="en" class="lang-btn px-3 py-1.5 rounded-full transition-colors" aria-pressed="false">EN</button>
             </div>
-            <a href="#reservar" class="bg-white text-black px-6 py-2.5 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors" data-i18n="nav.book">Agendar</a>
+            <a href="#reservar" class="magnetic bg-white text-black px-6 py-2.5 rounded-full text-sm font-medium hover:bg-gray-100 transition-colors" data-i18n="nav.book">Agendar</a>
         </div>
     </nav>
 
@@ -142,97 +160,102 @@
             <!-- FOTO: images/hero.png -->
             <div class="absolute inset-0 w-full h-full opacity-90 scale-110" data-hero-img>
                 <img src="images/hero.png" alt="Nail art de Vale Bolaños" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg></div>
+                <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>
             </div>
             <div class="absolute inset-0 bg-black/25"></div>
             <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/35"></div>
             <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-6 sm:pr-16 lg:pr-24">
-                <div class="hero-intro flex flex-col items-center sm:ml-auto sm:max-w-lg">
-                <div class="flex items-center gap-1.5 mb-5 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full text-sm">
+                <div class="flex flex-col items-center sm:ml-auto sm:max-w-lg">
+                <div class="mo-text flex items-center gap-1.5 mb-5 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full text-sm">
                     <svg class="icn text-amber-300" style="width:16px;height:16px"><use href="#i-ig"/></svg>
                     <a href="https://www.instagram.com/valnails.cr" target="_blank" rel="noopener" class="text-gray-300 underline-offset-2 hover:underline"><span data-i18n="hero.reviews">@valnails.cr en Instagram</span></a>
                 </div>
-                <h1 class="font-serif text-[clamp(2.6rem,13vw,5rem)] leading-none tracking-tight drop-shadow-lg">Nail Artist</h1>
-                <p class="mt-4 text-sm tracking-[0.18em] uppercase text-gray-200 drop-shadow" data-i18n="hero.tagline">Vale Bolaños · Manicure &amp; Nail Art · Heredia, Costa Rica</p>
-                <p class="mt-2 font-serif italic text-lg text-gray-100">#ValeNails</p>
+                <h1 class="mo-text font-serif text-[clamp(2.6rem,13vw,5rem)] leading-none tracking-tight drop-shadow-lg">Nail Artist</h1>
+                <p class="mo-text mt-4 text-sm tracking-[0.18em] uppercase text-gray-200 drop-shadow" data-i18n="hero.tagline">Vale Bolaños · Manicure &amp; Nail Art · Heredia, Costa Rica</p>
+                <p class="mo-text mt-2 font-serif italic text-lg text-gray-100">#ValeNails</p>
                 </div>
             </div>
         </section>
 
         <!-- Sobre mí (intro con foto de Vale) -->
-        <section class="relative px-6 py-20 max-w-2xl mx-auto text-center reveal">
-            <div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mb-5" data-i18n="intro.eyebrow">Sobre mí</div>
-            <p class="sec-lede text-base mb-10" data-i18n="intro.lede">Mi historia y mi pasión por el arte de las uñas.</p>
+        <section class="relative px-6 py-20 max-w-2xl mx-auto text-center">
+            <div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mb-5 mo-text" data-i18n="intro.eyebrow">Sobre mí</div>
+            <p class="sec-lede text-base mb-10 mo-text" data-i18n="intro.lede">Mi historia y mi pasión por el arte de las uñas.</p>
             <div class="w-[200px] h-[240px] mx-auto rounded-2xl overflow-hidden mb-10">
                 <!-- FOTO: images/vale.png -->
                 <img src="images/vale.png" alt="Vale Bolaños, nail artist" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="ph" style="display:none;"><svg class="icn"><use href="#i-camera"/></svg></div>
+                <div class="ph" style="display:none;"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>
             </div>
-            <p class="sec-lede text-base leading-relaxed max-w-lg mx-auto" data-i18n="intro.body">¡Hola! Soy Vale Bolaños, una apasionada artista de uñas con años de experiencia creando diseños únicos que realzan la belleza natural. Mi enfoque se basa en la atención al detalle, la higiene y la personalización para cada clienta, asegurando que cada set de uñas refleje su personalidad única.</p>
-            <p class="text-center text-gray-500 text-xs mt-8" data-i18n="intro.caption">Conociendo a Vale: pasión en cada diseño.</p>
+            <p class="sec-lede text-base leading-relaxed max-w-lg mx-auto mo-text" data-i18n="intro.body">¡Hola! Soy Vale Bolaños, una apasionada artista de uñas con años de experiencia creando diseños únicos que realzan la belleza natural. Mi enfoque se basa en la atención al detalle, la higiene y la personalización para cada clienta, asegurando que cada set de uñas refleje su personalidad única.</p>
+            <p class="text-center text-gray-500 text-xs mt-8 mo-text" data-i18n="intro.caption">Conociendo a Vale: pasión en cada diseño.</p>
         </section>
 
         <!-- Sobre Vale -->
-        <section class="px-6 py-20 pb-28 max-w-3xl mx-auto reveal">
-            <div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mb-8" data-i18n="about.eyebrow">El Arte</div>
-            <h2 class="font-serif sec-title text-[clamp(2.4rem,10vw,3.6rem)] mb-7" data-i18n="about.title">Perfección y detalle en cada trazo.</h2>
-            <p class="sec-lede text-lg leading-relaxed mb-6 max-w-xl" data-i18n="about.body1">Más que un servicio tradicional, cada manicura es un proceso creativo. Desde un esmaltado semipermanente clásico hasta el nail art más elaborado, el trabajo manual garantiza un acabado premium que resalta la belleza natural de tus manos.</p>
-            <p class="sec-lede text-lg leading-relaxed max-w-xl" data-i18n="about.body2">Combinamos técnicas modernas con una atención minuciosa. Trabajamos en un ambiente relajado en Heredia, con los mejores productos del mercado, para que tus uñas no solo se vean increíbles, sino que se mantengan sanas y fuertes.</p>
+        <section class="px-6 py-20 pb-28 max-w-3xl mx-auto">
+            <div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mb-8 mo-text" data-i18n="about.eyebrow">El Arte</div>
+            <h2 class="font-serif sec-title text-[clamp(2.4rem,10vw,3.6rem)] mb-7 mo-text" data-i18n="about.title">Perfección y detalle en cada trazo.</h2>
+            <p class="sec-lede text-lg leading-relaxed mb-6 max-w-xl mo-text" data-i18n="about.body1">Más que un servicio tradicional, cada manicura es un proceso creativo. Desde un esmaltado semipermanente clásico hasta el nail art más elaborado, el trabajo manual garantiza un acabado premium que resalta la belleza natural de tus manos.</p>
+            <p class="sec-lede text-lg leading-relaxed max-w-xl mo-text" data-i18n="about.body2">Combinamos técnicas modernas con una atención minuciosa. Trabajamos en un ambiente relajado en Heredia, con los mejores productos del mercado, para que tus uñas no solo se vean increíbles, sino que se mantengan sanas y fuertes.</p>
             <div class="relative h-[460px] w-full mt-12">
                 <!-- FOTO: images/foto1.png -->
-                <div class="absolute right-0 top-0 w-[78%] h-[380px] rounded-3xl overflow-hidden z-0" data-parallax="-6">
-                    <img src="images/foto1.png" alt="Vale Bolaños trabajando en el estudio" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg></div>
+                <div class="absolute right-0 top-0 w-[78%] h-[380px] rounded-3xl overflow-hidden z-0">
+                    <div class="w-full h-full scale-105" data-parallax="-12">
+                        <img src="images/foto1.png" alt="Vale Bolaños trabajando en el estudio" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>
+                    </div>
                 </div>
                 <div class="absolute right-4 top-4 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full text-xs z-10 flex items-center gap-1.5"><svg class="icn" style="width:14px;height:14px"><use href="#i-pin"/></svg> Heredia · CR</div>
                 <!-- FOTO: images/Nail Art.png -->
-                <div class="absolute left-0 bottom-0 w-[70%] h-[290px] rounded-3xl overflow-hidden z-10 shadow-2xl" data-parallax="10">
-                    <img src="images/Nail Art.png" alt="Detalle de un set de uñas recién terminado" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg></div>
+                <div class="absolute left-0 bottom-0 w-[70%] h-[290px] rounded-3xl overflow-hidden z-10 shadow-2xl">
+                    <div class="w-full h-full scale-105" data-parallax="13">
+                        <img src="images/Nail Art.png" alt="Detalle de un set de uñas recién terminado" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>
+                    </div>
                 </div>
             </div>
         </section>
 
         <!-- Mi trabajo (acordeón de fotos) -->
-        <section class="px-6 py-16 max-w-4xl mx-auto reveal">
-            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="inside.eyebrow">Mi trabajo</div></div>
-            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6" data-i18n="inside.title">Un vistazo a mis diseños</h2>
-            <p class="text-center sec-lede text-base leading-relaxed mb-14 max-w-lg mx-auto" data-i18n="inside.sub">Pasá el cursor (o tocá en el celular) sobre cada foto para verla en grande.</p>
+        <section class="px-6 py-16 max-w-4xl mx-auto">
+            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mo-text" data-i18n="inside.eyebrow">Mi trabajo</div></div>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6 mo-text" data-i18n="inside.title">Un vistazo a mis diseños</h2>
+            <p class="text-center sec-lede text-base leading-relaxed mb-14 max-w-lg mx-auto mo-text" data-i18n="inside.sub">Pasá el cursor (o tocá en el celular) sobre cada foto para verla en grande.</p>
             <div id="photo-accordion" class="photo-acc-wrap"></div>
             <p class="text-center text-gray-500 text-xs mt-4" data-i18n="gal.hint">Tocá una foto para ampliarla.</p>
         </section>
 
         <!-- Por qué elegirme -->
-        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
-            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="amen.eyebrow">Por qué elegirme</div></div>
-            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6" data-i18n="amen.title">Todo pensado para tu comodidad</h2>
-            <p class="text-center sec-lede text-base leading-relaxed mb-14 max-w-xl mx-auto" data-i18n="amen.sub">Desde la higiene hasta el último detalle del diseño, cuidando cada parte de tu cita.</p>
+        <section class="px-6 py-16 max-w-3xl mx-auto">
+            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mo-text" data-i18n="amen.eyebrow">Por qué elegirme</div></div>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6 mo-text" data-i18n="amen.title">Todo pensado para tu comodidad</h2>
+            <p class="text-center sec-lede text-base leading-relaxed mb-14 max-w-xl mx-auto mo-text" data-i18n="amen.sub">Desde la higiene hasta el último detalle del diseño, cuidando cada parte de tu cita.</p>
             <div id="amen-grid" class="grid sm:grid-cols-2 gap-5"></div>
         </section>
 
         <!-- Banner autocuidado -->
-        <section class="relative h-[70vh] min-h-[420px] w-full my-8 reveal overflow-hidden">
+        <section id="valenails-banner" class="relative h-screen w-full overflow-hidden">
             <!-- FOTO: images/Nail Art.png -->
-            <div class="absolute inset-0 w-full h-full scale-150" data-parallax="22">
-                <img src="images/foto6.png" alt="Manos relajadas recibiendo un tratamiento de manicure spa" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg></div>
+            <div class="absolute inset-0 w-full h-full scale-105" data-parallax="12">
+                <img src="images/foto6.png" alt="Manos relajadas recibiendo un tratamiento de manicure spa" class="w-full h-full object-cover object-[72%_30%]" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="ph" style="display:none;position:absolute;inset:0;"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>
             </div>
             <div class="absolute inset-0 bg-gradient-to-b from-black/25 via-black/35 to-black/55"></div>
-            <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-                <p class="font-serif italic text-2xl mb-3 drop-shadow">#ValeNails</p>
-                <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.2rem)] max-w-xl drop-shadow-lg" data-i18n="well.title">Date el gusto que merecés</h2>
-                <p class="mt-4 text-gray-100 text-sm max-w-md drop-shadow" data-i18n="well.sub">Un ratito solo para vos, con las manos como pretexto.</p>
+            <div id="valenails-text" class="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+                <p class="mo-text font-serif italic text-2xl mb-3 drop-shadow">#ValeNails</p>
+                <h2 class="mo-text font-serif sec-title text-[clamp(2.1rem,7vw,3.2rem)] max-w-xl drop-shadow-lg" data-i18n="well.title">Date el gusto que merecés</h2>
+                <p class="mo-text mt-4 text-gray-100 text-sm max-w-md drop-shadow" data-i18n="well.sub">Un ratito solo para vos, con las manos como pretexto.</p>
             </div>
         </section>
 
         <!-- Heredia -->
-        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
-            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="around.eyebrow">Ubicación</div></div>
-            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6" data-i18n="around.title">Heredia, Costa Rica</h2>
-            <p class="text-center sec-lede text-base leading-relaxed mb-14 max-w-xl mx-auto" data-i18n="around.sub">Atiendo en Heredia, con fácil acceso y coordinación de horario por WhatsApp o Instagram. Escribime y coordinamos el mejor día para tu cita.</p>
+        <section class="px-6 py-16 max-w-3xl mx-auto">
+            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mo-text" data-i18n="around.eyebrow">Ubicación</div></div>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6 mo-text" data-i18n="around.title">Heredia, Costa Rica</h2>
+            <p class="text-center sec-lede text-base leading-relaxed mb-14 max-w-xl mx-auto mo-text" data-i18n="around.sub">Atiendo en Heredia, con fácil acceso y coordinación de horario por WhatsApp o Instagram. Escribime y coordinamos el mejor día para tu cita.</p>
             <div class="relative w-full h-[440px] rounded-3xl overflow-hidden">
                 <!-- FOTO: espacio / rincón del estudio de Vale -->
-                <div class="absolute inset-0 w-full h-full"><div class="ph"><svg class="icn"><use href="#i-camera"/></svg></div></div>
+                <div class="absolute inset-0 w-full h-full scale-105" data-parallax="13"><div class="ph"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div></div>
+                <div class="absolute inset-0 bg-black/35"></div>
                 <div class="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
                     <div class="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/10 max-w-md">
                         <h3 class="font-serif text-2xl mb-2" data-i18n="around.c1.name">Un espacio pensado para vos</h3>
@@ -243,49 +266,49 @@
         </section>
 
         <!-- Lo que dicen mis clientas -->
-        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
+        <section class="px-6 py-16 max-w-3xl mx-auto">
             <div class="bg-[#111] rounded-[2rem] p-8 border border-white/5 text-center">
-                <div class="flex items-center justify-center gap-2 mb-2"><svg class="icn text-amber-300" style="width:26px;height:26px"><use href="#i-star"/></svg><span class="font-serif text-2xl" data-i18n="rev.eyebrow">Lo que dicen mis clientas</span></div>
-                <p class="text-gray-300 text-sm mb-8" data-i18n="rev.count">Reseñas reales, directo desde Instagram</p>
+                <div class="flex items-center justify-center gap-2 mb-2"><svg class="icn text-amber-300" style="width:26px;height:26px"><use href="#i-star"/></svg><span class="font-serif text-2xl mo-text" data-i18n="rev.eyebrow">Lo que dicen mis clientas</span></div>
+                <p class="text-gray-300 text-sm mb-8 mo-text" data-i18n="rev.count">Reseñas reales, directo desde Instagram</p>
                 <div id="rev-grid" class="grid sm:grid-cols-3 gap-4 mb-8 text-left"></div>
-                <a href="https://www.instagram.com/valnails.cr" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-sm border border-white/20 rounded-full px-5 py-2.5 hover:bg-white/10 transition-colors"><span data-i18n="rev.cta">Ver más en Instagram</span><svg class="icn" style="width:16px;height:16px"><use href="#i-arrow"/></svg></a>
+                <a href="https://www.instagram.com/valnails.cr" target="_blank" rel="noopener" class="magnetic inline-flex items-center gap-2 text-sm border border-white/20 rounded-full px-5 py-2.5 hover:bg-white/10 transition-colors"><span data-i18n="rev.cta">Ver más en Instagram</span><svg class="icn" style="width:16px;height:16px"><use href="#i-arrow"/></svg></a>
             </div>
         </section>
 
         <!-- Antes de tu cita -->
-        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
-            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="know.eyebrow">Antes de tu cita</div></div>
-            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6" data-i18n="know.title">Lo que debes saber</h2>
-            <p class="text-center sec-lede text-base leading-relaxed mb-12 max-w-xl mx-auto" data-i18n="know.sub">Unos detalles simples para que tu cita fluya bien, de principio a fin.</p>
+        <section class="px-6 py-16 max-w-3xl mx-auto">
+            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mo-text" data-i18n="know.eyebrow">Antes de tu cita</div></div>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6 mo-text" data-i18n="know.title">Lo que debes saber</h2>
+            <p class="text-center sec-lede text-base leading-relaxed mb-12 max-w-xl mx-auto mo-text" data-i18n="know.sub">Unos detalles simples para que tu cita fluya bien, de principio a fin.</p>
             <ul id="know-list" class="flex flex-col gap-3 mb-12"></ul>
             <div class="grid sm:grid-cols-2 gap-4" id="policy-grid"></div>
         </section>
 
         <!-- FAQ acordeón -->
-        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
-            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="faq.eyebrow">Preguntas frecuentes</div></div>
-            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-12" data-i18n="faq.title">Antes de escribirme</h2>
+        <section class="px-6 py-16 max-w-3xl mx-auto">
+            <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mo-text" data-i18n="faq.eyebrow">Preguntas frecuentes</div></div>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-12 mo-text" data-i18n="faq.title">Antes de escribirme</h2>
             <div id="faq-list" class="flex flex-col gap-3"></div>
         </section>
 
         <!-- Mapa -->
-        <section class="px-6 py-16 max-w-3xl mx-auto reveal">
+        <section class="px-6 py-16 max-w-3xl mx-auto">
             <div class="flex items-center gap-2 justify-center mb-6 text-gray-300"><svg class="icn" style="width:18px;height:18px"><use href="#i-pin"/></svg><span class="text-xs uppercase tracking-[0.18em]" data-i18n="map.eyebrow">Cómo llegar</span></div>
-            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-10" data-i18n="map.title">Heredia, Costa Rica</h2>
+            <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-10 mo-text" data-i18n="map.title">Heredia, Costa Rica</h2>
             <div class="rounded-3xl overflow-hidden border border-white/10 h-[360px]">
                 <iframe title="Mapa de Heredia" class="w-full h-full" style="border:0; filter:grayscale(0.3) contrast(1.05);" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Heredia%2C%20Costa%20Rica&output=embed"></iframe>
             </div>
         </section>
 
         <!-- Agendar -->
-        <section id="reservar" class="px-6 py-16 max-w-3xl mx-auto scroll-mt-20 reveal">
+        <section id="reservar" class="px-6 py-16 max-w-3xl mx-auto scroll-mt-20">
             <div class="bg-[#111] rounded-[2rem] p-8 border border-white/5">
-                <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow" data-i18n="book.eyebrow">Agenda tu cita</div></div>
-                <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6" data-i18n="book.title">Reservemos tu espacio</h2>
-                <p class="text-center sec-lede text-base leading-relaxed mb-10 max-w-md mx-auto px-2" data-i18n="book.sub">Escribime por WhatsApp o Instagram, o dejame tu consulta acá abajo. Te respondo pronto.</p>
+                <div class="flex justify-center mb-6"><div class="inline-block border border-gray-700 rounded-full px-4 py-1 text-xs text-gray-300 eyebrow mo-text" data-i18n="book.eyebrow">Agenda tu cita</div></div>
+                <h2 class="font-serif sec-title text-[clamp(2.1rem,7vw,3.1rem)] text-center mb-6 mo-text" data-i18n="book.title">Reservemos tu espacio</h2>
+                <p class="text-center sec-lede text-base leading-relaxed mb-10 max-w-md mx-auto px-2 mo-text" data-i18n="book.sub">Escribime por WhatsApp o Instagram, o dejame tu consulta acá abajo. Te respondo pronto.</p>
                 <div class="flex flex-col sm:flex-row gap-3 mb-8">
-                    <a id="wa-btn-inline" href="#" target="_blank" rel="noopener" class="flex-1 flex items-center justify-center gap-2 bg-white text-black font-medium py-4 rounded-xl hover:bg-gray-100 transition-colors"><svg class="icn" style="width:18px;height:18px"><use href="#i-wa"/></svg><span data-i18n="book.whatsapp">Escribir por WhatsApp</span></a>
-                    <a href="https://www.instagram.com/valnails.cr" target="_blank" rel="noopener" class="flex-1 flex items-center justify-center gap-2 border border-white/20 py-4 rounded-xl hover:bg-white/10 transition-colors"><svg class="icn" style="width:18px;height:18px"><use href="#i-ig"/></svg><span data-i18n="book.airbnb">Seguir en Instagram</span></a>
+                    <a id="wa-btn-inline" href="#" target="_blank" rel="noopener" class="magnetic mo-btn flex-1 flex items-center justify-center gap-2 bg-white text-black font-medium py-4 rounded-xl hover:bg-gray-100 transition-colors"><svg class="icn" style="width:18px;height:18px"><use href="#i-wa"/></svg><span data-i18n="book.whatsapp">Escribir por WhatsApp</span></a>
+                    <a href="https://www.instagram.com/valnails.cr" target="_blank" rel="noopener" class="magnetic mo-btn flex-1 flex items-center justify-center gap-2 border border-white/20 py-4 rounded-xl hover:bg-white/10 transition-colors"><svg class="icn" style="width:18px;height:18px"><use href="#i-ig"/></svg><span data-i18n="book.airbnb">Seguir en Instagram</span></a>
                 </div>
                 <div class="flex items-center gap-4 mb-8 text-xs text-gray-500"><div class="flex-1 h-px bg-white/10"></div><span data-i18n="book.or">o dejame tu consulta</span><div class="flex-1 h-px bg-white/10"></div></div>
                 <!-- FORM ENDPOINT -->
@@ -294,7 +317,7 @@
                     <div><label for="f-email" class="sr-only" data-i18n="form.email">WhatsApp o correo</label><input id="f-email" name="email" type="text" required autocomplete="email" data-i18n-attr="placeholder" data-i18n="form.email" placeholder="WhatsApp o correo" class="w-full bg-[#1a1a1a] text-white px-5 py-4 rounded-xl placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-white/40 transition-all"></div>
                     <div><label for="f-dates" class="sr-only" data-i18n="form.dates">Servicio de interés</label><input id="f-dates" name="dates" type="text" data-i18n-attr="placeholder" data-i18n="form.dates" placeholder="Servicio de interés" class="w-full bg-[#1a1a1a] text-white px-5 py-4 rounded-xl placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-white/40 transition-all"></div>
                     <div><label for="f-msg" class="sr-only" data-i18n="form.msg">Tu mensaje</label><textarea id="f-msg" name="message" rows="4" data-i18n-attr="placeholder" data-i18n="form.msg" placeholder="Contame la idea de diseño o tu disponibilidad" class="w-full bg-[#1a1a1a] text-white px-5 py-4 rounded-xl placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-white/40 transition-all resize-none"></textarea></div>
-                    <button type="submit" class="w-full bg-white text-black font-medium py-4 rounded-xl mt-1 hover:bg-gray-100 transition-colors" data-i18n="form.submit">Enviar consulta</button>
+                    <button type="submit" class="magnetic w-full bg-white text-black font-medium py-4 rounded-xl mt-1 hover:bg-gray-100 transition-colors" data-i18n="form.submit">Enviar consulta</button>
                     <p id="form-status" role="status" aria-live="polite" class="text-center text-sm min-h-[1.25rem]"></p>
                 </form>
             </div>
@@ -313,12 +336,12 @@
         <p class="text-xs text-gray-400 mt-2">Creado por Vetric Group</p>
     </footer>
 
-    <a id="wa-float" href="#" target="_blank" rel="noopener" aria-label="WhatsApp" class="fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform"><svg class="icn" style="width:26px;height:26px"><use href="#i-wa"/></svg></a>
+    <a id="wa-float" href="#" target="_blank" rel="noopener" aria-label="WhatsApp" class="magnetic fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-[#25D366] text-white flex items-center justify-center shadow-lg"><svg class="icn" style="width:26px;height:26px"><use href="#i-wa"/></svg></a>
 
     <!-- Lightbox -->
     <div id="lightbox" class="fixed inset-0 z-50 bg-black/90 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Imagen ampliada">
         <button id="lb-close" aria-label="Cerrar" class="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center"><svg class="icn" style="width:22px;height:22px"><use href="#i-close"/></svg></button>
-        <div id="lb-body" class="w-full max-w-2xl h-[70vh] rounded-2xl overflow-hidden"><div class="ph"><svg class="icn"><use href="#i-camera"/></svg></div></div>
+        <div id="lb-body" class="w-full max-w-2xl h-[70vh] rounded-2xl overflow-hidden"><div class="ph"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div></div>
     </div>
 
     <script>
@@ -469,13 +492,13 @@
         let lang = "es";
         const t = k => (I18N[lang][k] != null ? I18N[lang][k] : k);
         const waLink = () => "https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(t("wa.msg"));
-        const phSVG = () => `<div class="ph"><svg class="icn"><use href="#i-camera"/></svg></div>`;
+        const phSVG = () => `<div class="ph"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>`;
 
         function renderDynamic() {
             document.getElementById("photo-accordion").innerHTML = PORTFOLIO.map((p) => `
                 <div class="photo-acc gal-item" data-full="${p.img}" tabindex="0" role="button" aria-label="${t(p.k)}">
                     <img src="${p.img}" alt="${t(p.k)} — ${t('alt.cabin')}" class="w-full h-full object-cover" style="position:absolute;inset:0;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="ph" style="display:none;"><svg class="icn"><use href="#i-camera"/></svg></div>
+                    <div class="ph" style="display:none;"><svg class="icn"><use href="#i-camera"/></svg><small>Foto pendiente</small></div>
                     <div class="acc-scrim"></div><span class="acc-lbl">${t(p.k)}</span>
                 </div>`).join("");
 
@@ -530,12 +553,25 @@
         }
         function closeLb(){ lb.classList.add("hidden"); lb.classList.remove("flex"); document.body.style.overflow=""; }
         function bindGallery(){
+            const canHoverGal = window.matchMedia("(hover:hover) and (pointer:fine)").matches;
             document.querySelectorAll(".photo-acc").forEach(b => {
                 b.addEventListener("click", () => {
                     const group = b.closest("#photo-accordion");
+                    const wasActive = b.classList.contains("is-active");
                     group.querySelectorAll(".photo-acc").forEach(o => o.classList.remove("is-active"));
-                    b.classList.add("is-active");
-                    if (b.classList.contains("gal-item")) openLb(b.dataset.full);
+                    if (b.classList.contains("gal-item")) {
+                        if (canHoverGal) {
+                            // Escritorio: el hover ya hizo la vista previa; el clic abre la imagen directamente.
+                            b.classList.add("is-active");
+                            openLb(b.dataset.full);
+                        } else {
+                            // Táctil: el primer toque solo expande (como el hover). El segundo toque, ya expandido, abre la imagen.
+                            if (wasActive) { openLb(b.dataset.full); }
+                            else { b.classList.add("is-active"); }
+                        }
+                    } else {
+                        b.classList.add("is-active");
+                    }
                 });
                 b.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); b.click(); } });
             });
@@ -587,94 +623,324 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-    <!-- animations.js (misma lógica de la plantilla original) -->
+    <!-- animations.js — reveal robusto (IntersectionObserver nativo) + parallax sutil (GSAP, decorativo) -->
     <script>
 /* =====================================================================
-   Nail Artist · Vale Bolaños — animations.js
-   GSAP + ScrollTrigger · Vanilla JS · mobile-first · minimalista/editorial
-   (misma lógica de la plantilla original, sin cambios funcionales)
+   Nail Artist · Vale Bolaños — motion.js
+
+   IMPORTANTE: el reveal de texto (lo que hace visible el contenido) NO
+   depende de que GSAP cargue. Usa IntersectionObserver, una API nativa
+   del navegador, así que el contenido SIEMPRE se muestra aunque una
+   librería externa falle en cargar (red lenta, bloqueador, etc.).
+   GSAP se usa únicamente para el parallax, que es decorativo: si no
+   carga, las imágenes igual se ven, solo sin el movimiento sutil.
+
+   Reglas del sistema de motion:
+   1) Todo el texto (títulos, párrafos, botones) entra deslizando de
+      izquierda a derecha (translateX, nunca Y), opacidad 0→1, con la
+      curva cubic-bezier(0.22,1,0.36,1), sin rebote. Lo anima CSS
+      (transition), disparado una sola vez al entrar en el viewport,
+      con un pequeño retraso escalonado entre elementos de un grupo.
+   2) Las imágenes no tienen animación de entrada: ya están en la
+      página. Su único movimiento es un parallax de unos pocos px,
+      atado al scroll.
+   3) Nada de animaciones independientes del scroll (sin floating loops).
+   4) Magnetic hover muy sutil en botones, misma curva, sin elastic.
    ===================================================================== */
 
 (function () {
   "use strict";
 
   var prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var ready = window.gsap && window.ScrollTrigger;
 
-  if (!ready || prefersReduced) {
-    document.querySelectorAll(".reveal").forEach(function (el) {
-      el.style.opacity = "1";
-      el.style.transform = "none";
-    });
-    return;
+  // Agrupar los elementos de tarjetas/listas dinámicas bajo el mismo lenguaje visual
+  var CARD_GROUPS = [
+    "#amen-grid > div", "#rev-grid > div", "#policy-grid > div",
+    "#know-list > li", "#faq-list > div"
+  ];
+  CARD_GROUPS.forEach(function (sel) {
+    document.querySelectorAll(sel).forEach(function (el) { el.classList.add("mo-text"); });
+  });
+
+  var revealEls = Array.prototype.slice.call(document.querySelectorAll(".mo-text, .mo-btn"));
+
+  if (prefersReduced || !revealEls.length) {
+    // Nada que animar, o el usuario prefiere sin movimiento: no se oculta nada.
+  } else {
+    // Recién ahora "armamos" el ocultamiento (ver CSS: html.js-motion .mo-text{opacity:0...}).
+    // Si algo de lo de abajo falla, esta clase nunca se agrega y el texto sigue visible siempre.
+    document.documentElement.classList.add("js-motion");
+    // Forzamos que el navegador "pinte" ese estado oculto antes de seguir — si no, para el
+    // contenido que ya está a la vista al cargar (como el hero), ocultar y mostrar pasa tan
+    // rápido en el mismo frame que el ojo nunca ve la animación (parece que no pasa nada).
+    void document.documentElement.offsetHeight;
+
+    // Retraso escalonado (80–120ms) por grupo: contamos posición dentro de su padre inmediato.
+    var counters = new WeakMap();
+    function delayFor(el) {
+      var parent = el.parentElement;
+      var n = counters.get(parent) || 0;
+      counters.set(parent, n + 1);
+      return Math.min(n, 8) * 100; // tope de 8 pasos para no demorar de más en grupos largos
+    }
+    function revealNow(el) {
+      if (el.classList.contains("is-in")) return;
+      el.style.transitionDelay = delayFor(el) + "ms";
+      el.classList.add("is-in");
+    }
+
+    // Doble requestAnimationFrame: garantiza que el frame "oculto" ya se pintó en pantalla
+    // antes de empezar a observar/revelar, en todos los navegadores.
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      if ("IntersectionObserver" in window) {
+        var io = new IntersectionObserver(function (entries, obs) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            revealNow(entry.target);
+            obs.unobserve(entry.target);
+          });
+        }, { threshold: 0.08, rootMargin: "0px 0px -8% 0px" });
+        revealEls.forEach(function (el) { io.observe(el); });
+      } else {
+        revealEls.forEach(revealNow);
+      }
+    }); });
+
+    // Red de seguridad, corta y no atada a la carga de imágenes/recursos externos:
+    // nada debe quedar invisible por más de ~1.2s, pase lo que pase.
+    setTimeout(function () { revealEls.forEach(revealNow); }, 1200);
   }
+
+  /* ---------- Magnetic hover sutil (sin elastic; misma curva vía CSS transition) ---------- */
+  var canHover = window.matchMedia("(hover:hover) and (pointer:fine)").matches;
+  if (canHover && !prefersReduced) {
+    document.querySelectorAll(".magnetic").forEach(function (btn) {
+      var strength = 8; /* px máximos — muy sutil */
+      btn.addEventListener("mousemove", function (e) {
+        var r = btn.getBoundingClientRect();
+        var relX = (e.clientX - r.left) / r.width - 0.5;
+        var relY = (e.clientY - r.top) / r.height - 0.5;
+        btn.style.transform = "translate(" + (relX * strength) + "px," + (relY * strength) + "px)";
+      });
+      btn.addEventListener("mouseleave", function () {
+        btn.style.transform = "translate(0,0)";
+      });
+    });
+  }
+
+  /* ---------- Parallax ultra sutil (decorativo, opcional — requiere GSAP) ---------- */
+  if (prefersReduced || !window.gsap || !window.ScrollTrigger) return;
 
   gsap.registerPlugin(ScrollTrigger);
   ScrollTrigger.config({ ignoreMobileResize: true });
 
-  gsap.set(".reveal", { opacity: 0, y: 28 });
-
-  ScrollTrigger.batch(".reveal", {
-    start: "top 85%",
-    once: true,
-    onEnter: function (els) {
-      gsap.to(els, {
-        opacity: 1,
-        y: 0,
-        duration: 1.1,
-        ease: "power3.out",
-        stagger: 0.1,
-        overwrite: true
-      });
-    }
-  });
-
   var hero = document.querySelector("[data-hero-img]");
   if (hero) {
-    gsap.to(hero, {
-      yPercent: 14,
+    gsap.fromTo(hero, { y: -8 }, {
+      y: 8,
       ease: "none",
-      scrollTrigger: {
-        trigger: hero.closest("section"),
-        start: "top top",
-        end: "bottom top",
-        scrub: true
-      }
+      scrollTrigger: { trigger: hero.closest("section"), start: "top top", end: "bottom top", scrub: true }
     });
   }
 
   var mm = gsap.matchMedia();
-
   function buildParallax(factor) {
     return function () {
       gsap.utils.toArray("[data-parallax]").forEach(function (el) {
-        var amt = (parseFloat(el.dataset.parallax) || 0) * factor;
-        gsap.fromTo(
-          el,
-          { yPercent: -amt },
-          {
-            yPercent: amt,
-            ease: "none",
-            scrollTrigger: {
-              trigger: el.closest("section"),
-              start: "top bottom",
-              end: "bottom top",
-              scrub: true
-            }
-          }
-        );
+        if (el === hero) return;
+        var raw = parseFloat(el.dataset.parallax) || 0;
+        var amt = Math.max(-16, Math.min(16, raw)) * factor; /* casi imperceptible, en px */
+        gsap.fromTo(el, { y: -amt }, {
+          y: amt,
+          ease: "none",
+          scrollTrigger: { trigger: el.closest("section"), start: "top bottom", end: "bottom top", scrub: true }
+        });
       });
     };
   }
-
   mm.add("(min-width: 640px)", buildParallax(1));
-  mm.add("(max-width: 639px)", buildParallax(0.45));
+  mm.add("(max-width: 639px)", buildParallax(0.5));
 
   window.addEventListener("load", function () {
     ScrollTrigger.refresh();
   });
 })();
 
+    </script>
+    <!-- ============================================================
+         PANEL DE DIAGNÓSTICO — solo se activa con ?debug al final de la URL
+         Ej: https://nailartistcr.netlify.app/?debug
+         No afecta nada para los visitantes normales del sitio.
+         ============================================================ -->
+    <script>
+    (function () {
+        "use strict";
+        if (!/[?&]debug\b/.test(window.location.search)) return;
+
+        function getPath(el) {
+            var p = [], cur = el, depth = 0;
+            while (cur && cur.tagName && depth < 6) {
+                var s = cur.tagName.toLowerCase();
+                if (cur.id) s += "#" + cur.id;
+                else if (cur.className && typeof cur.className === "string") {
+                    s += "." + cur.className.trim().split(/\s+/).slice(0, 2).join(".");
+                }
+                p.unshift(s);
+                cur = cur.parentElement;
+                depth++;
+            }
+            return p.join(" > ");
+        }
+
+        function runDiagnostics() {
+            var lines = [];
+            var warn = 0;
+            function add(text, isWarn) { lines.push((isWarn ? "⚠ " : "✓ ") + text); if (isWarn) warn++; }
+
+            // 1) Librerías
+            add("Tailwind cargó: " + (typeof window.tailwind !== "undefined"), typeof window.tailwind === "undefined");
+            add("GSAP cargó: " + (typeof window.gsap !== "undefined"), false);
+            add("ScrollTrigger cargó: " + (typeof window.ScrollTrigger !== "undefined"), false);
+            add("IntersectionObserver soportado: " + ("IntersectionObserver" in window), !("IntersectionObserver" in window));
+
+            // 2) Textos que deberían animarse
+            var revealEls = Array.prototype.slice.call(document.querySelectorAll(".mo-text, .mo-btn"));
+            var stuck = revealEls.filter(function (el) { return !el.classList.contains("is-in"); });
+            add("Textos animados en la página: " + revealEls.length, false);
+            add("Textos TODAVÍA invisibles ahora mismo: " + stuck.length, stuck.length > 0);
+            stuck.slice(0, 6).forEach(function (el) {
+                add("  invisible → " + getPath(el) + " (\"" + el.textContent.trim().slice(0, 30) + "\")", true);
+            });
+
+            // 3) Altura de cada sección (detecta secciones colapsadas)
+            document.querySelectorAll("section").forEach(function (sec, i) {
+                var r = sec.getBoundingClientRect();
+                var id = sec.id ? "#" + sec.id : "sección " + i;
+                add(id + " → alto: " + Math.round(r.height) + "px", r.height < 40);
+            });
+
+            // 4) Elementos con overflow:hidden que recortan contenido real
+            //    (se excluyen los acordeones colapsados a propósito: .acc-panel, y el
+            //    hero, que recorta a propósito el sobrante del zoom de la foto de fondo)
+            document.querySelectorAll("*").forEach(function (el) {
+                if (el.classList.contains("acc-panel")) return;
+                if (el.hasAttribute("data-hero-img") || el.closest("[data-hero-img]") || el.querySelector("[data-hero-img]")) return;
+                var cs = getComputedStyle(el);
+                var overflowHidden = cs.overflowY === "hidden" || cs.overflow === "hidden" || cs.overflow === "clip";
+                if (!overflowHidden) return;
+                var diff = el.scrollHeight - el.clientHeight;
+                if (diff > 80) {
+                    add("RECORTANDO " + Math.round(diff) + "px → " + getPath(el), true);
+                }
+            });
+
+            // 5) Overflow horizontal
+            var docW = document.documentElement.scrollWidth, winW = window.innerWidth;
+            add("Ancho documento vs. ventana: " + docW + "px / " + winW + "px", docW > winW + 5);
+
+            // 6) Huecos reales entre secciones (compara el borde inferior de una con el
+            //    borde superior de la siguiente, en el documento completo, no en pantalla)
+            var landmarks = Array.prototype.slice.call(document.querySelectorAll("main > section, footer"));
+            var prevBottom = null, prevLabel = null;
+            landmarks.forEach(function (el) {
+                var top = el.getBoundingClientRect().top + window.scrollY;
+                var bottom = top + el.offsetHeight;
+                var label = el.tagName.toLowerCase() + (el.id ? "#" + el.id : "");
+                var cs = getComputedStyle(el);
+                var bg = cs.backgroundColor;
+                if (prevBottom !== null) {
+                    var gap = Math.round(top - prevBottom);
+                    add("Espacio entre " + prevLabel + " y " + label + ": " + gap + "px" +
+                        " (fondo de " + label + ": " + bg + ")", gap > 20);
+                }
+                prevBottom = bottom;
+                prevLabel = label;
+            });
+
+            return { lines: lines, warn: warn };
+        }
+
+        function render() {
+            var result = runDiagnostics();
+            var box = document.getElementById("debug-panel-body");
+            if (!box) return;
+            box.innerHTML = result.lines.map(function (l) {
+                var isWarn = l.indexOf("⚠") === 0;
+                return '<div style="padding:2px 0;color:' + (isWarn ? "#ff8080" : "#8fdc8f") + '">' + l.replace(/</g, "&lt;") + "</div>";
+            }).join("");
+            var summary = document.getElementById("debug-panel-summary");
+            if (summary) {
+                summary.textContent = result.warn > 0
+                    ? result.warn + " problema(s) encontrado(s)"
+                    : "Todo OK por ahora — seguí bajando la página, se actualiza solo";
+                summary.style.color = result.warn > 0 ? "#ff8080" : "#8fdc8f";
+            }
+        }
+
+        function buildPanel() {
+            // Le pone a cada sección un contorno de color + una etiqueta pegada arriba a la
+            // izquierda, para que en una captura se vea clarísimo qué sección es cada bloque.
+            var colors = ["#ff5c5c", "#ffb020", "#ffe45c", "#7be36b", "#5cd6ff", "#7a8bff", "#e05cff", "#ff5ca0"];
+            Array.prototype.slice.call(document.querySelectorAll("main > section, footer")).forEach(function (el, i) {
+                var color = colors[i % colors.length];
+                el.style.outline = "3px dashed " + color;
+                el.style.outlineOffset = "-3px";
+                var tag = document.createElement("div");
+                tag.textContent = "[" + i + "] " + (el.id ? "#" + el.id : el.tagName.toLowerCase());
+                tag.style.cssText = "position:absolute;top:0;left:0;background:" + color +
+                    ";color:#000;font:11px/1.4 monospace;padding:2px 6px;z-index:99998;border-radius:0 0 6px 0;";
+                var cs = getComputedStyle(el);
+                if (cs.position === "static") el.style.position = "relative";
+                el.appendChild(tag);
+            });
+
+            var panel = document.createElement("div");
+            panel.id = "debug-panel";
+            panel.style.cssText = "position:fixed;left:0;right:0;bottom:0;max-height:45vh;overflow:auto;" +
+                "background:#0a0a0a;border-top:2px solid #444;color:#eee;font:12px/1.5 monospace;" +
+                "z-index:99999;padding:10px 14px;box-shadow:0 -4px 20px rgba(0,0,0,.6);";
+            panel.innerHTML =
+                '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">' +
+                '<strong style="color:#fff;">🔍 Diagnóstico Vale Nails</strong>' +
+                '<span id="debug-panel-summary" style="font-weight:bold;"></span>' +
+                '<span>' +
+                '<button id="debug-panel-copy" style="background:#fff;color:#000;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font:12px/1 monospace;">Copiar reporte</button> ' +
+                '<button id="debug-panel-close" style="background:#333;color:#fff;border:none;border-radius:6px;padding:4px 10px;cursor:pointer;font:12px/1 monospace;">Cerrar</button>' +
+                '</span></div>' +
+                '<div id="debug-panel-body"></div>';
+            document.body.appendChild(panel);
+
+            document.getElementById("debug-panel-close").addEventListener("click", function () {
+                panel.remove();
+            });
+            document.getElementById("debug-panel-copy").addEventListener("click", function () {
+                var text = Array.prototype.slice.call(document.querySelectorAll("#debug-panel-body div"))
+                    .map(function (d) { return d.textContent; }).join("\n");
+                text = "=== DIAGNÓSTICO VALE NAILS (" + new Date().toLocaleString() + ") ===\n" + text;
+                navigator.clipboard.writeText(text).then(function () {
+                    var btn = document.getElementById("debug-panel-copy");
+                    var old = btn.textContent;
+                    btn.textContent = "¡Copiado!";
+                    setTimeout(function () { btn.textContent = old; }, 1500);
+                });
+            });
+
+            render();
+            // Se actualiza solo mientras se hace scroll, para pescar cambios en vivo.
+            var t;
+            window.addEventListener("scroll", function () {
+                clearTimeout(t);
+                t = setTimeout(render, 200);
+            });
+            window.addEventListener("load", function () { setTimeout(render, 1500); });
+        }
+
+        if (document.readyState === "complete" || document.readyState === "interactive") {
+            setTimeout(buildPanel, 300);
+        } else {
+            document.addEventListener("DOMContentLoaded", function () { setTimeout(buildPanel, 300); });
+        }
+    })();
     </script>
 </body>
 </html>
